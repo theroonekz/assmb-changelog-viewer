@@ -1,0 +1,1160 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Журнал {{ start }} — {{ end }}</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chartjs-plugin-datalabels/2.2.0/chartjs-plugin-datalabels.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Unbounded:wght@300;600&display=swap');
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+  :root[data-theme="dark"]{
+    --bg:#0f1117;--surface:#181c27;--surface2:#1e2435;--border:#2a2f3d;
+    --accent:#4f8ef7;--text:#e2e6f0;--muted:#6b7280;
+    --green:#34d399;--yellow:#fbbf24;--red:#f87171;--orange:#fb923c;--purple:#a78bfa;
+    --grid:rgba(79,142,247,.03);--hbg:rgba(15,17,23,.97);
+    --row-hover:#1a1f2e;--modal-ov:rgba(0,0,0,.75);
+    --badge-sys-bg:rgba(107,114,128,.12);--badge-sys:#9ca3af;
+  }
+  :root[data-theme="light"]{
+    --bg:#f0f2f8;--surface:#fff;--surface2:#f8faff;--border:#d1d8e8;
+    --accent:#2563eb;--text:#1e293b;--muted:#64748b;
+    --green:#059669;--yellow:#d97706;--red:#dc2626;--orange:#ea580c;--purple:#7c3aed;
+    --grid:rgba(37,99,235,.03);--hbg:rgba(240,242,248,.98);
+    --row-hover:#e8ecf5;--modal-ov:rgba(0,0,0,.35);
+    --badge-sys-bg:rgba(100,116,139,.1);--badge-sys:#64748b;
+  }
+
+  body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;transition:background .3s,color .3s}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+
+  /* ── Шапка ── */
+  header{
+    position:relative;z-index:10;
+    display:flex;align-items:center;justify-content:space-between;
+    padding:10px 20px;border-bottom:1px solid var(--border);
+    background:var(--hbg);gap:16px;flex-wrap:wrap;
+    transition:background .3s,border-color .3s;
+  }
+  .header-left{display:flex;align-items:center;gap:12px}
+  .period-title{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:600}
+  .period-title .acc{color:var(--accent)}
+
+  /* Правая часть шапки — разделена на блоки */
+  .header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+
+  /* Блок пользователя — выделен визуально */
+  .user-block{
+    display:flex;flex-direction:column;align-items:flex-end;gap:2px;
+    background:var(--surface);border:1px solid var(--border);
+    border-radius:6px;padding:5px 10px;
+  }
+  .user-greeting{font-size:10px;color:var(--muted)}
+  .user-name{font-size:12px;color:var(--text);font-weight:600}
+  .user-desc{font-size:10px;color:var(--accent)}
+
+  /* Блок темы — с подписью */
+  .theme-block{display:flex;align-items:center;gap:6px}
+  .theme-label{font-size:10px;color:var(--muted);white-space:nowrap}
+
+    /* 3D-минималистичные кнопки */
+  .btn-3d{
+    display:inline-flex;align-items:center;gap:5px;
+    border:none;border-radius:7px;padding:6px 15px;
+    font-family:'Unbounded',sans-serif;font-size:9px;font-weight:700;
+    letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+    transition:all .15s;position:relative;white-space:nowrap;
+  }
+  .btn-3d:active{transform:translateY(2px)}
+
+  .btn-3d-back{
+    background:linear-gradient(160deg,#808080 0%,#808080 60%,#808080 100%);
+    color:#fff;
+    box-shadow:0 4px 0 #575757, 0 6px 12px rgba(109,40,217,.35);
+  }
+  .btn-3d-back:hover{box-shadow:0 3px 0 #949494, 0 5px 10px rgba(109,40,217,.35);transform:translateY(1px)}
+  .btn-3d-back:active{box-shadow:0 1px 0 #949494, 0 2px 6px rgba(109,40,217,.25);transform:translateY(3px)}
+
+  .btn-3d-purple{
+    background:linear-gradient(160deg,#b89afa 0%,#7c3aed 60%,#5b21b6 100%);
+    color:#fff;
+    box-shadow:0 4px 0 #4c1d95, 0 6px 12px rgba(109,40,217,.35);
+  }
+  .btn-3d-purple:hover{box-shadow:0 3px 0 #4c1d95, 0 5px 10px rgba(109,40,217,.35);transform:translateY(1px)}
+  .btn-3d-purple:active{box-shadow:0 1px 0 #4c1d95, 0 2px 6px rgba(109,40,217,.25);transform:translateY(3px)}
+  
+  .btn-3d-green{
+    background:linear-gradient(160deg,#6ee7b7 0%,#059669 60%,#047857 100%);
+    color:#fff;
+    box-shadow:0 4px 0 #065f46, 0 6px 12px rgba(5,150,105,.35);
+  }
+  .btn-3d-green:hover{box-shadow:0 3px 0 #065f46, 0 5px 10px rgba(5,150,105,.3);transform:translateY(1px)}
+  .btn-3d-green:active{box-shadow:0 1px 0 #065f46, 0 2px 6px rgba(5,150,105,.2);transform:translateY(3px)}
+  
+  .btn-3d-logout{
+    background:linear-gradient(160deg,#ff6161 0%,#ff2424 60%,#ff0000 100%);
+    color:#fff;
+    box-shadow:0 4px 0 #961432, 0 6px 12px rgba(5,150,105,.35);
+  }
+  .btn-3d-logout:hover{box-shadow:0 3px 0 #065f46, 0 5px 10px rgba(5,150,105,.3);transform:translateY(1px)}
+  .btn-3d-logout:active{box-shadow:0 1px 0 #065f46, 0 2px 6px rgba(5,150,105,.2);transform:translateY(3px)}
+
+/* ── 3D Текст для надписи -- Тёмная тема ── */
+.theme-label-3d {
+
+	font-family: 'Unbounded', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text);
+  /* Тонкое свечение без тяжелых черных теней */
+  text-shadow: 0 0 15px rgba(79, 142, 247, 0.5);
+  background: rgba(255,255,255,0.03);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.05);
+  
+  }
+  
+  
+
+	/* ── 3D Тумблер темы ── */
+  .theme-block { display: flex; align-items: center; gap: 10px; }
+  .theme-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+
+  .switch-3d {
+    position: relative; display: inline-block;
+    width: 54px; height: 26px; cursor: pointer;
+  }
+  .switch-3d input { opacity: 0; width: 0; height: 0; }
+
+  .slider-3d {
+    position: absolute; inset: 0;
+    background: linear-gradient(160deg, #808080 0%, #575757 100%);
+    border-radius: 34px; transition: .3s;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4), 0 4px 0 #404040;
+  }
+
+  /* Круг внутри тумблера */
+  .slider-3d:before {
+    position: absolute; content: "";
+    height: 18px; width: 18px; left: 4px; bottom: 4px;
+    background: white; border-radius: 50%; transition: .3s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+
+  /* Состояние "Включено" (Dark Mode) */
+  input:checked + .slider-3d {
+    background: linear-gradient(160deg, #b89afa 0%, #7c3aed 60%);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 4px 0 #4c1d95, 0 0 10px rgba(124, 58, 237, 0.4);
+  }
+
+  input:checked + .slider-3d:before { transform: translateX(28px); }
+
+  .switch-3d:active .slider-3d { transform: translateY(2px); box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 2px 0 #4c1d95; }
+
+  /* ── Фильтры (sticky top:0) ── */
+  .filters{
+    position:sticky;top:0;z-index:100;
+    padding:7px 20px;border-bottom:1px solid var(--border);
+    display:flex;gap:5px;flex-wrap:wrap;align-items:center;
+    background:var(--surface);transition:background .3s,border-color .3s;
+  }
+  .filter-label{font-size:10px;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);white-space:nowrap}
+  .filter-btn{font-family:'JetBrains Mono',monospace;font-size:10px;background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:3px;padding:3px 9px;cursor:pointer;transition:all .2s;white-space:nowrap}
+  .filter-btn.active,.filter-btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(79,142,247,.08)}
+  .filter-sep{width:1px;height:18px;background:var(--border);margin:0 4px;flex-shrink:0}
+  .search-input{background:var(--bg);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;border-radius:3px;padding:4px 10px;outline:none;transition:border-color .2s;width:190px}
+  .search-input:focus{border-color:var(--accent)}
+  .count-badge{margin-left:auto;font-size:10px;color:var(--muted);white-space:nowrap}
+  .count-badge b{color:var(--text)}
+
+  /* ── Таблица ── */
+  .table-wrap{position:relative;z-index:1;overflow-x:auto;padding:0 20px 40px}
+  table{width:100%;border-collapse:collapse;font-size:11px;min-width:1100px}
+
+  thead th{
+    text-align:left;font-size:9px;text-transform:uppercase;letter-spacing:.1em;
+    color:var(--muted);padding:8px 8px;border-bottom:2px solid var(--border);
+    white-space:nowrap;position:sticky;top:0;background:var(--bg);z-index:5;
+    transition:background .3s;
+  }
+
+  tbody tr{border-bottom:1px solid rgba(42,47,61,.35);transition:background .12s}
+  :root[data-theme="light"] tbody tr{border-bottom:1px solid rgba(209,216,232,.5)}
+  tbody tr:hover{background:var(--row-hover)}
+  tbody tr.has-comment{background:rgba(79,142,247,.03)}
+
+  /* td — padding только, никаких max-height (они игнорируются в таблицах) */
+  td{padding:6px 8px;vertical-align:top;line-height:1.5}
+
+  /* ── КЛЮЧЕВОЕ: clamp-обёртки внутри td ── */
+  /* В обычном состоянии обрезаем текст через line-clamp */
+  .cell-clip{
+    display:-webkit-box;
+    -webkit-box-orient:vertical;
+    -webkit-line-clamp:2;
+    overflow:hidden;
+    cursor:pointer;
+  }
+  /* При раскрытии строки — снимаем clamp */
+  tr.expanded .cell-clip{
+    -webkit-line-clamp:unset;
+    display:block;
+    overflow:visible;
+  }
+
+  /* Комментарий всегда виден полностью — без clamp */
+  .td-comment{min-width:165px;max-width:205px;cursor:default}
+
+  .muted{color:var(--muted)}
+  .cancelled td{opacity:.4;text-decoration:line-through}
+
+  /* Badges ИЗМЕНЕНИЕ */
+  .badge{font-size:9px;font-family:'Unbounded',sans-serif;font-weight:600;letter-spacing:.06em;text-transform:uppercase;padding:2px 7px;border-radius:3px;white-space:nowrap;display:inline-block}
+  .badge-create{background:rgba(79,142,247,.12);color:var(--accent);border:1px solid rgba(79,142,247,.25)}
+  .badge-edit{background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.25)}
+  .badge-delete{background:rgba(248,113,113,.12);color:var(--red);border:1px solid rgba(248,113,113,.25)}
+  .badge-sys{background:var(--badge-sys-bg);color:var(--badge-sys);border:1px solid rgba(107,114,128,.2)}
+
+  /* Тип объекта */
+  .obj-badge{font-size:9px;font-family:'Unbounded',sans-serif;font-weight:600;letter-spacing:.05em;text-transform:uppercase;padding:2px 7px;border-radius:3px;white-space:nowrap;display:inline-block}
+  .ob-нОФ{background:rgba(167,139,250,.12);color:var(--purple);border:1px solid rgba(167,139,250,.25)}
+  .ob-присадки{background:rgba(251,191,36,.12);color:var(--yellow);border:1px solid rgba(251,191,36,.25)}
+  .ob-система{background:rgba(107,114,128,.12);color:var(--badge-sys);border:1px solid rgba(107,114,128,.2)}
+  .ob-резервуар{background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.25)}
+  .ob-установка{background:rgba(79,142,247,.12);color:var(--accent);border:1px solid rgba(79,142,247,.25)}
+  .ob-поток{background:rgba(251,146,60,.12);color:var(--orange);border:1px solid rgba(251,146,60,.25)}
+  .ob-операция{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.2)}
+  .ob-зависимость{background:rgba(107,114,128,.1);color:var(--badge-sys);border:1px solid rgba(107,114,128,.18)}
+  .ob-жёсткая{background:rgba(251,146,60,.1);color:var(--orange);border:1px solid rgba(251,146,60,.2)}
+  .ob-default{background:rgba(79,142,247,.07);color:var(--muted);border:1px solid rgba(79,142,247,.13)}
+
+  /* Комментарий в ячейке */
+  .comment-view{cursor:pointer;padding:3px 5px;border-radius:3px;border:1px solid transparent;transition:border-color .2s;min-height:22px}
+  .comment-view:hover{border-color:var(--border)}
+  .comment-text{font-size:11px;color:var(--text);word-break:break-word}
+  .comment-empty{font-size:10px;color:var(--muted);font-style:italic}
+  .comment-meta{font-size:9px;color:var(--muted);margin-top:2px}
+
+  /* ── Модалка комментария ── */
+  .modal-overlay{display:none;position:fixed;inset:0;z-index:1000;background:var(--modal-ov);backdrop-filter:blur(4px);align-items:center;justify-content:center}
+  .modal-overlay.open{display:flex}
+  .modal{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:24px 28px;width:100%;max-width:500px;box-shadow:0 20px 60px rgba(0,0,0,.4);transition:background .3s,border-color .3s}
+  .modal-title{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:600;margin-bottom:14px}
+  .modal-context{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:9px 12px;font-size:10px;color:var(--muted);margin-bottom:12px;line-height:1.7}
+  .modal-context b{color:var(--text)}
+  .history-label{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:5px}
+  .history-list{margin-bottom:12px;display:flex;flex-direction:column;gap:5px;max-height:130px;overflow-y:auto}
+  .history-item{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:6px 10px;font-size:10px;line-height:1.5}
+  .hi-meta{color:var(--muted)}.hi-text{color:var(--text);margin-top:2px}
+  .history-empty{font-size:10px;color:var(--muted);font-style:italic;margin-bottom:10px}
+  .conflict-box{background:rgba(251,191,36,.08);border:1px solid rgba(251,191,36,.35);border-radius:5px;padding:10px 12px;margin-bottom:12px;font-size:11px;line-height:1.6;display:none}
+  .conflict-box.show{display:block}
+  .conflict-box b{color:var(--yellow)}
+  .conflict-actions{display:flex;gap:8px;margin-top:8px}
+  .btn-overwrite{background:rgba(248,113,113,.15);border:1px solid rgba(248,113,113,.35);color:var(--red);border-radius:4px;padding:4px 12px;font-size:10px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s}
+  .btn-cancel-conf{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:4px;padding:4px 12px;font-size:10px;cursor:pointer;font-family:'JetBrains Mono',monospace;transition:all .2s}
+  textarea{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:9px 12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;resize:vertical;min-height:80px;outline:none;transition:border-color .2s,background .3s}
+  textarea:focus{border-color:var(--accent)}
+  textarea:disabled{opacity:.45;cursor:not-allowed}
+  .modal-actions{display:flex;gap:7px;margin-top:12px;justify-content:flex-end;align-items:center}
+  .save-status{font-size:10px;color:var(--green);display:none;margin-right:auto}
+  .save-status.err{color:var(--red)}
+  .btn-cancel{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:4px;padding:6px 16px;font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;transition:all .2s}
+  .btn-save{background:var(--accent);color:#fff;border:none;border-radius:4px;padding:6px 18px;font-family:'Unbounded',sans-serif;font-size:9px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:opacity .2s}
+  .btn-save:hover{opacity:.88}
+  .btn-save:disabled{opacity:.4;cursor:not-allowed}
+
+  /* ── Модалка статистики ── */
+  .stats-overlay{display:none;position:fixed;inset:0;z-index:1000;background:var(--modal-ov);backdrop-filter:blur(6px);align-items:flex-start;justify-content:center;overflow-y:auto;padding:24px}
+  .stats-overlay.open{display:flex}
+  .stats-modal{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:28px;width:100%;max-width:860px;margin:auto;box-shadow:0 24px 80px rgba(0,0,0,.5)}
+  .stats-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+  .stats-title{font-family:'Unbounded',sans-serif;font-size:15px;font-weight:600}
+  .stats-close{background:transparent;border:1px solid var(--border);border-radius:4px;padding:5px 12px;cursor:pointer;color:var(--muted);font-family:'JetBrains Mono',monospace;font-size:11px;transition:all .2s}
+  .stats-close:hover{border-color:var(--red);color:var(--red)}
+
+  /* Баннер прогресса комментариев */
+  .comment-progress-bar{
+    background:var(--bg);border:1px solid var(--border);border-radius:8px;
+    padding:14px 18px;margin-bottom:20px;
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+    flex-wrap:wrap;
+  }
+  .cp-label{font-size:11px;color:var(--text)}
+  .cp-label b{color:var(--accent)}
+  .cp-label .cp-warn{color:var(--red)}
+  .cp-label .cp-ok{color:var(--green)}
+  .cp-track{flex:1;min-width:140px;height:6px;background:var(--border);border-radius:3px;overflow:hidden}
+  .cp-fill{height:100%;border-radius:3px;background:var(--accent);transition:width .5s}
+  .cp-pct{font-size:11px;font-family:'Unbounded',sans-serif;font-weight:600;white-space:nowrap}
+
+  .stats-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px;margin-bottom:20px}
+  .stat-card{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:12px 14px}
+  .stat-card.safe{border-color:rgba(52,211,153,.3)}
+  .stat-card.warn{border-color:rgba(248,113,113,.3)}
+  .sc-label{font-size:9px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:5px}
+  .sc-val{font-family:'Unbounded',sans-serif;font-size:20px;font-weight:600;color:var(--text)}
+  .sc-sub{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.4}
+  .sc-tag{font-size:9px;font-family:'Unbounded',sans-serif;font-weight:600;padding:1px 6px;border-radius:2px;margin-top:4px;display:inline-block}
+  .tag-safe{background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.2)}
+  .tag-warn{background:rgba(248,113,113,.1);color:var(--red);border:1px solid rgba(248,113,113,.2)}
+
+  .stats-section{margin-bottom:20px}
+  .stats-section-title{font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:12px}
+  .chart-box{background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:14px;position:relative;height:250px}
+  .charts-row{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:20px}
+  @media(max-width:680px){.charts-row{grid-template-columns:1fr}}
+  .stats-loading{text-align:center;padding:40px;color:var(--muted);font-size:12px}
+
+  /* Признак */
+  .sign-view{cursor:pointer;padding:3px 5px;border-radius:3px;border:1px solid transparent;transition:border-color .2s;min-height:22px}
+  .sign-view:hover{border-color:var(--border)}
+  .sign-preset-btn{font-family:'JetBrains Mono',monospace;font-size:11px;background:var(--bg);border:1px solid var(--border);color:var(--muted);border-radius:4px;padding:3px 10px;cursor:pointer;transition:all .2s}
+  .sign-preset-btn:hover,.sign-preset-btn.active{border-color:var(--accent);color:var(--accent);background:rgba(79,142,247,.08)}
+</style>
+<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'light')</script>
+</head>
+<body>
+
+<!-- ── Шапка ── -->
+<header>
+  <div class="header-left">
+	<a href="/" style="text-decoration: none;"> <button class="btn-3d btn-3d-back">Назад</button></a>
+    <div class="period-title">
+      {{ start[8:10] }}.{{ start[5:7] }}.{{ start[0:4] }}<span class="acc"> → </span>{{ end[8:10] }}.{{ end[5:7] }}.{{ end[0:4] }}
+      {% if custom_period is defined and custom_period %}
+      <span style="font-size:9px;font-family:'JetBrains Mono',monospace;background:rgba(251,191,36,.12);color:var(--yellow);border:1px solid rgba(251,191,36,.25);border-radius:3px;padding:1px 7px;margin-left:8px;vertical-align:middle;font-weight:400;letter-spacing:.04em">Произвольный период</span>
+      {% endif %}
+    </div>
+  </div>
+  <div class="header-right">
+
+
+
+    <!-- Тема -->
+	<!--
+    <div class="theme-block">
+      <span class="theme-label-3d">Тёмная тема:</span>
+      <label class="switch-3d">
+        <input type="checkbox" id="themeToggle" onclick="toggleTheme()">
+        <span class="slider-3d"></span>
+      </label>
+    </div>
+	
+	
+
+    <a href="/logout" class="btn-3d btn-3d-logout">Выйти</a>
+	-->
+
+	<button class="btn-3d btn-3d-purple" onclick="openStats()">📊 Статистика</button>
+	<button class="btn-3d btn-3d-green" onclick="exportExcel()">⬇ Excel</button>
+  </div>
+</header>
+
+<!-- ── Фильтры по типу объекта ── -->
+<div class="filters">
+  <span class="filter-label">Тип объекта:</span>
+  <button class="filter-btn active" onclick="filterObj('all',this)">Все</button>
+  {% for ot in obj_types %}
+  <button class="filter-btn" onclick="filterObj('{{ ot | e }}',this)">{{ ot }}</button>
+  {% endfor %}
+  <div class="filter-sep"></div>
+  <input type="text" class="search-input" placeholder="Поиск..." oninput="doSearch(this.value)">
+  <span class="count-badge">Количество изменений: <b id="visibleCount">{{ logs|length }}</b> записей</span>
+</div>
+
+<!-- ── Таблица ── -->
+<div class="table-wrap">
+  <table id="logTable">
+    <thead>
+      <tr>
+        <th>Период</th><th>Тип периода</th><th>Время действия</th><th>Пользователь</th>
+        <th>Тип объекта</th><th>Имя объекта</th><th>Изменение</th>
+        <th>Атрибут</th><th>До</th><th>После</th><th>Отменено</th><th>Комментарий</th><th>Признак</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for log in logs %}
+      {% set lid = log.get('LogId',0) %}
+      {% set ct  = log.get('Тип изменения','') %}
+      {% set pu  = log.get('Пользователь','') %}
+      {% set ot  = log.get('Тип объекта','') %}
+      {% set ctxt= log['Комментарий'] %}
+      {% set ot_lower = ot | lower %}
+      <tr
+        class="{% if log.get('Отменено')=='Да' %}cancelled{% endif %}{% if ctxt %} has-comment{% endif %}"
+        data-obj-type="{{ ot }}"
+        data-search="{{ (log.get('Имя объекта','') ~ ' ' ~ log.get('Атрибут','') ~ ' ' ~ pu ~ ' ' ~ ot)|lower }}"
+        onclick="toggleRow(event, this)"
+      >
+        <td class="muted" style="white-space:nowrap;font-size:10px">{{ log.get('Начало периода','') }} → {{ log.get('Конец периода','') }}</td>
+        <td class="muted" style="font-size:10px;white-space:nowrap">{{ log.get('Тип периода','') }}</td>
+        <td class="muted" style="white-space:nowrap;font-size:10px">{{ log.get('Время действия','') }}</td>
+        <td style="white-space:nowrap;font-size:11px">{{ pu }}</td>
+        <td>
+          {% if ot %}
+          <span class="obj-badge
+            {% if 'ноф' in ot_lower %}ob-нОФ
+            {% elif 'присадк' in ot_lower %}ob-присадки
+            {% elif 'систем' in ot_lower %}ob-система
+            {% elif 'резервуар' in ot_lower %}ob-резервуар
+            {% elif 'установк' in ot_lower %}ob-установка
+            {% elif 'поток' in ot_lower %}ob-поток
+            {% elif 'операц' in ot_lower %}ob-операция
+            {% elif 'зависимост' in ot_lower %}ob-зависимость
+            {% elif 'жёсткая' in ot_lower or 'жесткая' in ot_lower %}ob-жёсткая
+            {% else %}ob-default{% endif %}">{{ ot }}</span>
+          {% endif %}
+        </td>
+        <!-- Клипируемые ячейки — через div.cell-clip внутри td -->
+        <td style="max-width:200px;font-size:11px"><div class="cell-clip">{{ log.get('Имя объекта','') }}</div></td>
+        <td><span class="badge {% if ct=='Создание' %}badge-create{% elif ct=='Редактирование' %}badge-edit{% elif ct=='Удаление' %}badge-delete{% else %}badge-sys{% endif %}">{{ ct }}</span></td>
+        <td style="max-width:175px"><div class="cell-clip">{{ log.get('Атрибут','') }}</div></td>
+        <td class="muted" style="max-width:105px"><div class="cell-clip">{{ log.get('До','') }}</div></td>
+        <td style="max-width:105px;font-weight:600"><div class="cell-clip">{{ log.get('После','') }}</div></td>
+        <td class="muted" style="text-align:center">{% if log.get('Отменено')=='Да' %}<span style="color:var(--red)">✕</span>{% endif %}</td>
+
+        <!-- Комментарий — клик не разворачивает строку -->
+        <td class="td-comment" onclick="event.stopPropagation()">
+          <div class="comment-view"
+               onclick="openComment({{ lid }},this,'{{ pu | e }}')"
+               data-log-id="{{ lid }}"
+               data-change-no="{{ log.current_change_no }}"
+               data-history="{{ log.comment_history_json | e }}"
+               data-comment-text="{{ ctxt | e }}">
+            {% if ctxt %}
+              <div class="comment-text" id="ct_{{ lid }}">{{ ctxt }}</div>
+              <div class="comment-meta" id="cm_{{ lid }}">{{ log['Комментарий автор'] }}{% if log['Комментарий дата'] %} · {{ log['Комментарий дата'] }}{% endif %}</div>
+            {% else %}
+              <div class="comment-empty" id="ce_{{ lid }}">+ добавить</div>
+            {% endif %}
+          </div>
+        </td>
+
+        <!-- Признак -->
+        {% set stxt = log.get('Признак','') %}
+        <td class="td-comment" onclick="event.stopPropagation()">
+          <div class="sign-view"
+               onclick="openSign({{ lid }},this,'{{ pu | e }}')"
+               data-log-id="{{ lid }}"
+               data-sign-no="{{ log.sign_change_no }}"
+               data-sign-history="{{ log.sign_history_json | e }}"
+               data-sign-text="{{ stxt | e }}">
+            {% if stxt %}
+              <div class="comment-text" id="st_{{ lid }}">{{ stxt }}</div>
+            {% else %}
+              <div class="comment-empty" id="se_{{ lid }}">+ признак</div>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<!-- ── Модалка комментария ── -->
+<div class="modal-overlay" id="commentModal" onclick="closeOnOverlay(event)">
+  <div class="modal">
+    <div class="modal-title">Комментарий</div>
+    <div class="modal-context" id="modalContext"></div>
+    <div id="historyBlock"></div>
+    <div class="conflict-box" id="conflictBox">
+      <b>⚠ Конфликт: кто-то добавил комментарий пока эта запись была открыта</b><br>
+      <span id="conflictInfo"></span>
+      <div class="conflict-actions">
+        <button class="btn-overwrite" onclick="forceOverwrite()">Перезаписать</button>
+        <button class="btn-cancel-conf" onclick="loadConflictText()">Взять их текст</button>
+      </div>
+    </div>
+    <textarea id="commentText" placeholder="Ctrl+Enter — сохранить"></textarea>
+    <div class="modal-actions">
+      <span class="save-status" id="saveStatus"></span>
+      <button class="btn-cancel" onclick="closeModal()">Отмена</button>
+      <button class="btn-save" id="btnSave" onclick="saveComment(false)">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Модалка статистики ── -->
+<div class="stats-overlay" id="statsOverlay" onclick="closeStatsOverlay(event)">
+  <div class="stats-modal">
+    <div class="stats-header">
+      <div class="stats-title">📊 Статистика изменений</div>
+      <button class="btn-3d btn-3d-logout" onclick="closeStats()">✕ Закрыть</button>
+    </div>
+    <div id="statsContent"><div class="stats-loading">Загрузка...</div></div>
+  </div>
+</div>
+
+<!-- ── Модалка признака ── -->
+<div class="modal-overlay" id="signModal" onclick="closeSignOnOverlay(event)">
+  <div class="modal">
+    <div class="modal-title">Признак</div>
+    <div class="modal-context" id="signContext"></div>
+    <div id="signHistoryBlock"></div>
+    <div class="conflict-box" id="signConflictBox">
+      <b>⚠ Конфликт: кто-то изменил признак пока запись была открыта</b><br>
+      <span id="signConflictInfo"></span>
+      <div class="conflict-actions">
+        <button class="btn-overwrite" onclick="forceSign()">Перезаписать</button>
+        <button class="btn-cancel-conf" onclick="loadSignConflictText()">Взять их значение</button>
+      </div>
+    </div>
+    <div style="margin-bottom:10px">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:6px">Выбрать из списка:</div>
+      <div id="signPresetContainer" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+        <span style="font-size:11px;color:var(--muted)">Загрузка...</span>
+      </div>
+    </div>
+    <textarea id="signText" placeholder="Или введите признак вручную..."></textarea>
+    <div class="modal-actions">
+      <span class="save-status" id="signSaveStatus"></span>
+      <button class="btn-cancel" onclick="closeSignModal()">Отмена</button>
+      <button class="btn-save" id="btnSignSave" onclick="saveSign(false)">Сохранить</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+// ── Тема ──────────────────────────────────────────────────────────
+const html = document.documentElement;
+const themeToggle = document.getElementById('themeToggle');
+
+// Инициализация при загрузке
+const savedTheme = localStorage.getItem('theme') || 'dark';
+setTheme(savedTheme);
+
+function setTheme(t) {
+  html.setAttribute('data-theme', t);
+  localStorage.setItem('theme', t);
+  
+  // Устанавливаем положение тумблера
+  if (themeToggle) {
+    themeToggle.checked = (t === 'dark');
+  }
+}
+
+function toggleTheme() {
+  const newTheme = themeToggle.checked ? 'dark' : 'light';
+  setTheme(newTheme);
+}
+
+// ── Раскрытие строк ───────────────────────────────────────────────
+// Клик на строку — toggle класса expanded
+// Внутри .cell-clip -webkit-line-clamp:2 обрезает текст
+// При expanded — clamp снимается через CSS: tr.expanded .cell-clip { display:block; overflow:visible }
+function toggleRow(e, tr) {
+  // Не раскрывать если клик был в колонке комментария (она имеет stopPropagation)
+  tr.classList.toggle('expanded');
+}
+
+// ── Фильтры ───────────────────────────────────────────────────────
+let activeObj = 'all', searchVal = '';
+function applyFilters() {
+  const rows = document.querySelectorAll('#logTable tbody tr');
+  let vis = 0;
+  rows.forEach(row => {
+    const ot = row.dataset.objType;
+    const s  = row.dataset.search;
+    const show = (activeObj === 'all' || ot === activeObj) &&
+                 (searchVal === '' || s.includes(searchVal));
+    row.style.display = show ? '' : 'none';
+    if (show) vis++;
+  });
+  document.getElementById('visibleCount').textContent = vis;
+}
+function filterObj(val, btn) {
+  activeObj = val;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilters();
+}
+function doSearch(v) { searchVal = v.toLowerCase(); applyFilters(); }
+
+// ── Модалка комментария ───────────────────────────────────────────
+let currentLogId = null, currentCell = null, currentRowUser = '', conflictData = null;
+const userAccess   = {{ user.access }};
+const userFullname = {{ user.fullname | tojson }};
+
+function openComment(logId, el, rowUser) {
+  currentLogId = logId; currentCell = el; currentRowUser = rowUser; conflictData = null;
+  document.getElementById('conflictBox').classList.remove('show');
+
+  const row = el.closest('tr'), cells = row.querySelectorAll('td');
+  // Берём текст из .cell-clip (полный, не обрезанный)
+  const obj  = cells[5]?.querySelector('.cell-clip')?.textContent?.trim() || cells[5]?.textContent?.trim() || '';
+  const attr = cells[7]?.querySelector('.cell-clip')?.textContent?.trim() || cells[7]?.textContent?.trim() || '';
+  const from = cells[8]?.querySelector('.cell-clip')?.textContent?.trim() || cells[8]?.textContent?.trim() || '';
+  const to   = cells[9]?.querySelector('.cell-clip')?.textContent?.trim() || cells[9]?.textContent?.trim() || '';
+  const time = cells[2]?.textContent?.trim() || '';
+
+  let ctx = `<b>Объект:</b> ${obj || '—'}`;
+  if (attr) ctx += `<br><b>Атрибут:</b> ${attr}`;
+  if (from || to) ctx += `<br><b>До:</b> ${from || '—'} → <b>После:</b> ${to || '—'}`;
+  ctx += `<br><b>Время:</b> ${time}`;
+  document.getElementById('modalContext').innerHTML = ctx;
+
+  let history = [];
+  try { history = JSON.parse(el.dataset.history || '[]'); } catch(e) {}
+  const hBlock = document.getElementById('historyBlock');
+  if (history.length > 0) {
+    let h = '<div class="history-label">История</div><div class="history-list">';
+    [...history].reverse().forEach(x => {
+      const lbl = x.type === 'Inserted' ? '✦ Добавлено' : '✎ Изменено';
+      h += `<div class="history-item"><div class="hi-meta">#${x.no} · ${lbl} · ${x.by} · ${x.at}</div><div class="hi-text">${x.text}</div></div>`;
+    });
+    h += '</div>'; hBlock.innerHTML = h;
+  } else {
+    hBlock.innerHTML = '<div class="history-empty">Комментариев не было</div>';
+  }
+
+  const lastText = history.length > 0 ? history[history.length - 1].text : '';
+  document.getElementById('commentText').value = lastText;
+
+  const canEdit = userAccess === 2 || userAccess === 3 || (userAccess === 1 && rowUser === userFullname);
+  document.getElementById('commentText').disabled = !canEdit;
+  document.getElementById('btnSave').disabled = !canEdit;
+  document.getElementById('saveStatus').style.display = 'none';
+  document.getElementById('commentModal').classList.add('open');
+  if (canEdit) setTimeout(() => document.getElementById('commentText').focus(), 80);
+}
+
+function closeModal() {
+  document.getElementById('commentModal').classList.remove('open');
+  currentLogId = null; currentCell = null;
+}
+function closeOnOverlay(e) {
+  if (e.target === document.getElementById('commentModal')) closeModal();
+}
+
+async function saveComment(forceFlag) {
+  const text = document.getElementById('commentText').value.trim();
+  const btn = document.getElementById('btnSave'), st = document.getElementById('saveStatus');
+  const clientNo = parseInt(currentCell?.dataset?.changeNo || '0');
+  btn.disabled = true;
+  const sendNo = forceFlag && conflictData ? conflictData.db_no : clientNo;
+  try {
+    const resp = await fetch('/api/comment', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({log_id: currentLogId, comment: text, change_no: sendNo, row_user: currentRowUser})
+    });
+    if (!resp.ok) throw new Error((await resp.json()).detail || resp.statusText);
+    const data = await resp.json();
+    if (data.conflict) {
+      conflictData = data;
+      document.getElementById('conflictInfo').innerHTML =
+        `Актуальный: <b>${data.db_by}</b> (${data.db_at}): «${data.db_text}»`;
+      document.getElementById('conflictBox').classList.add('show');
+      btn.disabled = false; return;
+    }
+    const lid = currentLogId;
+    if (currentCell && text) {
+      currentCell.innerHTML = `<div class="comment-text" id="ct_${lid}">${text}</div>
+        <div class="comment-meta" id="cm_${lid}">${data.by} · ${data.at}</div>`;
+      currentCell.dataset.commentText = text;
+      let hist = []; try { hist = JSON.parse(currentCell.dataset.history || '[]'); } catch(e) {}
+      hist.push({no: data.no, type: data.type, by: data.by, at: data.at, text: text});
+      currentCell.dataset.history = JSON.stringify(hist);
+      currentCell.dataset.changeNo = data.no;
+      currentCell.closest('tr').classList.add('has-comment');
+    }
+    st.textContent = 'Сохранено ✓'; st.className = 'save-status'; st.style.display = 'inline';
+    setTimeout(() => closeModal(), 600);
+  } catch(e) {
+    st.textContent = 'Ошибка: ' + e.message; st.className = 'save-status err';
+    st.style.display = 'inline'; btn.disabled = false;
+  }
+}
+function forceOverwrite() { saveComment(true); }
+function loadConflictText() {
+  if (conflictData) document.getElementById('commentText').value = conflictData.db_text;
+  if (currentCell && conflictData) currentCell.dataset.changeNo = conflictData.db_no;
+  conflictData = null;
+  document.getElementById('conflictBox').classList.remove('show');
+  document.getElementById('btnSave').disabled = false;
+}
+
+// ── Признак ───────────────────────────────────────────────────────
+let currentSignLogId = null, currentSignCell = null;
+let currentSignRowUser = '', signConflictData = null;
+
+async function loadSignPresets(currentVal) {
+  const container = document.getElementById('signPresetContainer');
+  if (!container) return;
+  try {
+    const r = await fetch('/api/sign_presets');
+    if (!r.ok) { container.innerHTML = ''; return; }
+    const items = await r.json();
+    if (!items.length) { container.innerHTML = ''; return; }
+    container.innerHTML = items.map(p => {
+      const isActive = p.name === currentVal;
+      return `<button class="sign-preset-btn${isActive?' active':''}" onclick="selectSignPreset('${p.name.replace(/'/g,"\'")}')">${p.name}</button>`;
+    }).join('');
+  } catch(e) {
+    container.innerHTML = '';
+  }
+}
+
+function selectSignPreset(val) {
+  document.getElementById('signText').value = val;
+  document.querySelectorAll('.sign-preset-btn').forEach(b => {
+    b.classList.toggle('active', b.textContent === val);
+  });
+}
+
+function openSign(logId, el, rowUser) {
+  currentSignLogId = logId;
+  currentSignCell  = el;
+  currentSignRowUser = rowUser;
+  signConflictData = null;
+  document.getElementById('signConflictBox').classList.remove('show');
+
+  // Контекст: берём из той же строки
+  const row   = el.closest('tr');
+  const cells = row.querySelectorAll('td');
+  // Порядок td: 0=Период, 1=ТипПер, 2=Время, 3=Польз, 4=ТипОбъ, 5=ИмяОбъ, ...
+  const obj  = cells[5]?.querySelector('.cell-clip')?.textContent?.trim() || cells[5]?.textContent?.trim() || '';
+  const time = cells[2]?.textContent?.trim() || '';
+  let ctx = `<b>Объект:</b> ${obj || '—'}<br><b>Время:</b> ${time}`;
+  document.getElementById('signContext').innerHTML = ctx;
+
+  // История признаков
+  let signHist = [];
+  try { signHist = JSON.parse(el.dataset.signHistory || '[]'); } catch(e) {}
+  const hBlock = document.getElementById('signHistoryBlock');
+  if (signHist.length > 0) {
+    let h = '<div class="history-label">История</div><div class="history-list">';
+    [...signHist].reverse().forEach(x => {
+      const lbl = x.type === 'Inserted' ? '✦ Добавлено' : '✎ Изменено';
+      h += `<div class="history-item"><div class="hi-meta">#${x.no} · ${lbl} · ${x.by} · ${x.at}</div><div class="hi-text">${x.text}</div></div>`;
+    });
+    h += '</div>'; hBlock.innerHTML = h;
+  } else {
+    hBlock.innerHTML = '<div class="history-empty">Признак не задавался</div>';
+  }
+
+  const lastText = signHist.length > 0 ? signHist[signHist.length - 1].text : '';
+  document.getElementById('signText').value = lastText;
+
+  // Права
+  const canEdit = userAccess === 2 || userAccess === 3 || (userAccess === 1 && rowUser === userFullname);
+  document.getElementById('signText').disabled = !canEdit;
+  document.getElementById('btnSignSave').disabled = !canEdit;
+  document.getElementById('signSaveStatus').style.display = 'none';
+
+  // Загружаем пресеты из API
+  loadSignPresets(lastText);
+
+  document.getElementById('signModal').classList.add('open');
+  if (canEdit) setTimeout(() => document.getElementById('signText').focus(), 80);
+}
+
+function closeSignModal() {
+  document.getElementById('signModal').classList.remove('open');
+  currentSignLogId = null; currentSignCell = null;
+}
+function closeSignOnOverlay(e) {
+  if (e.target === document.getElementById('signModal')) closeSignModal();
+}
+
+async function saveSign(forceFlag) {
+  const text    = document.getElementById('signText').value.trim();
+  const btn     = document.getElementById('btnSignSave');
+  const st      = document.getElementById('signSaveStatus');
+  const clientNo = parseInt(currentSignCell?.dataset?.signNo || '0');
+  btn.disabled = true;
+  const sendNo = (forceFlag && signConflictData) ? signConflictData.db_no : clientNo;
+  try {
+    const resp = await fetch('/api/sign', {
+      method: 'POST', headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({
+        log_id: currentSignLogId, sign: text,
+        change_no: sendNo, row_user: currentSignRowUser
+      })
+    });
+    if (!resp.ok) {
+      const err = await resp.json();
+      throw new Error(err.detail || resp.statusText);
+    }
+    const data = await resp.json();
+
+    if (data.conflict) {
+      signConflictData = data;
+      document.getElementById('signConflictInfo').innerHTML =
+        `Актуальный: <b>${data.db_by}</b> (${data.db_at}): «${data.db_text}»`;
+      document.getElementById('signConflictBox').classList.add('show');
+      btn.disabled = false; return;
+    }
+
+    const lid = currentSignLogId;
+    if (currentSignCell) {
+      if (text) {
+        currentSignCell.innerHTML = `<div class="comment-text" id="st_${lid}">${text}</div>`;
+      } else {
+        currentSignCell.innerHTML = `<div class="comment-empty" id="se_${lid}">+ признак</div>`;
+      }
+      currentSignCell.dataset.signText = text;
+      let hist = [];
+      try { hist = JSON.parse(currentSignCell.dataset.signHistory || '[]'); } catch(e) {}
+      hist.push({no: data.no, type: data.type, by: data.by, at: data.at, text: text});
+      currentSignCell.dataset.signHistory = JSON.stringify(hist);
+      currentSignCell.dataset.signNo = data.no;
+    }
+
+    st.textContent = 'Сохранено ✓'; st.className = 'save-status'; st.style.display = 'inline';
+    setTimeout(() => closeSignModal(), 600);
+  } catch(e) {
+    st.textContent = 'Ошибка: ' + e.message;
+    st.className = 'save-status err'; st.style.display = 'inline';
+    btn.disabled = false;
+  }
+}
+
+function forceSign() { saveSign(true); }
+
+function loadSignConflictText() {
+  if (signConflictData) document.getElementById('signText').value = signConflictData.db_text;
+  if (currentSignCell && signConflictData) currentSignCell.dataset.signNo = signConflictData.db_no;
+  signConflictData = null;
+  document.getElementById('signConflictBox').classList.remove('show');
+  document.getElementById('btnSignSave').disabled = false;
+}
+document.getElementById('commentText').addEventListener('keydown', e => {
+  if (e.ctrlKey && e.key === 'Enter') saveComment(false);
+  if (e.key === 'Escape') closeModal();
+});
+document.getElementById('signText').addEventListener('keydown', e => {
+  if (e.ctrlKey && e.key === 'Enter') saveSign(false);
+  if (e.key === 'Escape') closeSignModal();
+});
+
+// ── Статистика ────────────────────────────────────────────────────
+let statsCharts = [];
+const COLORS = {
+  'НОФ':'#a78bfa','Присадки':'#fbbf24','Зависимость':'#34d399',
+  'Операция':'#f87171','Жесткая связь':'#fb923c','Жёсткая связь':'#fb923c',
+  'Резервуар':'#34d399','Система':'#9ca3af','Установка':'#4f8ef7'
+};
+function getColor(name) {
+  if (COLORS[name]) return COLORS[name];
+  const h = name.split('').reduce((a, c) => a + c.charCodeAt(0), 0);
+  return `hsl(${h % 360},60%,60%)`;
+}
+
+async function openStats() {
+  document.getElementById('statsOverlay').classList.add('open');
+  document.getElementById('statsContent').innerHTML = '<div class="stats-loading">Загрузка данных...</div>';
+  statsCharts.forEach(c => c.destroy()); statsCharts = [];
+
+  try {
+    // ВАЖНО: передаём те же start/end что и у текущего периода
+    // OnlySearchDate=1 уже применён в /logs, поэтому статистику считаем
+    // по строкам таблицы на странице, а не делаем новый запрос к хранимке
+    renderStatsFromTable();
+  } catch(e) {
+    document.getElementById('statsContent').innerHTML =
+      `<div class="stats-loading" style="color:var(--red)">Ошибка: ${e.message}</div>`;
+  }
+}
+
+function renderStatsFromTable() {
+  const rows = document.querySelectorAll('#logTable tbody tr');
+  const safeTypes = new Set(['НОФ', 'Присадки', 'Зависимость']);
+
+  const objChange = {};   
+  const userCounts = {};  
+  const signCounts = {}; // Исправлено: добавлена инициализация
+  let total = 0;
+  let signTotal = 0;     // Исправлено: добавлена инициализация
+
+  rows.forEach(row => {
+    // Пропускаем скрытые фильтром строки
+    if (row.style.display === 'none') return;
+
+    const cells = row.querySelectorAll('td');
+    const ot = row.dataset.objType || '';
+    const ct = cells[6]?.querySelector('.badge')?.textContent?.trim() || '';
+    const usr = cells[3]?.textContent?.trim() || '';
+    
+    // Исправлено: корректный поиск значения признака из dataset
+    const signCell = row.querySelector('.sign-view');
+    const signText = signCell?.dataset?.signText || '';
+
+    total++;
+    
+    // Группировка по объектам
+    if (!objChange[ot]) objChange[ot] = {};
+    objChange[ot][ct] = (objChange[ot][ct] || 0) + 1;
+    
+    // Группировка по пользователям
+    userCounts[usr] = (userCounts[usr] || 0) + 1;
+
+    // Подсчет признаков
+    if (signText) {
+      signTotal++;
+      signCounts[signText] = (signCounts[signText] || 0) + 1;
+    }
+  });
+
+  const isDark = html.getAttribute('data-theme') === 'dark';
+  const textColor = isDark ? '#e2e6f0' : '#1e293b';
+  const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.08)';
+
+  const objSummary = Object.entries(objChange)
+    .map(([type, counts]) => ({
+      type, 
+      total: Object.values(counts).reduce((a, b) => a + b, 0), 
+      breakdown: counts
+    }))
+    .sort((a, b) => b.total - a.total);
+
+  const topUsers = Object.entries(userCounts).sort((a, b) => b[1] - a[1]).slice(0, 10);
+
+  // Исправлено: формирование карточек (закрыты скобки)
+  let cards = '<div class="stats-cards">';
+  cards += `<div class="stat-card"><div class="sc-label">Всего изменений</div><div class="sc-val">${total}</div><div class="sc-sub">за период</div></div>`;
+  
+  objSummary.forEach(o => {
+    cards += `<div class="stat-card">
+      <div class="sc-label">${o.type}</div>
+      <div class="sc-val">${o.total}</div>
+      <div class="sc-sub">${Object.entries(o.breakdown).map(([k, v]) => `${k}: ${v}`).join(' · ')}</div>
+    </div>`;
+  });
+  cards += '</div>';
+
+  const signNotSet = total - signTotal;
+  const signEntries = Object.entries(signCounts).sort((a, b) => b[1] - a[1]);
+
+  const chartsHtml = `
+    <div class="stats-section">
+      <div class="stats-section-title">Распределение по типу объекта</div>
+      <div class="charts-row">
+        <div class="chart-box"><canvas id="chartDonut"></canvas></div>
+        <div class="chart-box"><canvas id="chartBar"></canvas></div>
+      </div>
+    </div>
+    <div class="stats-section">
+      <div class="stats-section-title">Активность пользователей</div>
+      <div class="chart-box" style="height:190px"><canvas id="chartUsers"></canvas></div>
+    </div>
+    <div class="stats-section">
+      <div class="stats-section-title">Статистика по признакам</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px">
+        Всего изменений: <b style="color:var(--text)">${total}</b>
+        &nbsp;·&nbsp; С признаком: <b style="color:var(--green)">${signTotal}</b>
+        &nbsp;·&nbsp; Без признака: <b style="color:var(--muted)">${signNotSet}</b>
+      </div>
+      <div class="chart-box" style="height:220px"><canvas id="chartSign"></canvas></div>
+    </div>`;
+
+  document.getElementById('statsContent').innerHTML = cards + chartsHtml;
+
+  // Donut с постоянными подписями
+  statsCharts.push(new Chart(document.getElementById('chartDonut'), {
+    type: 'doughnut',
+    plugins: [ChartDataLabels],
+    data: {
+      labels: objSummary.map(o => o.type),
+      datasets: [{
+        data: objSummary.map(o => o.total),
+        backgroundColor: objSummary.map(o => getColor(o.type)),
+        borderWidth: 2, borderColor: isDark ? '#181c27' : '#fff'
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '58%',
+      plugins: {
+        legend: {position:'right', labels:{color:textColor, font:{size:10}, boxWidth:11}},
+        tooltip: {callbacks:{label: ctx => `${ctx.label}: ${ctx.raw} (${Math.round(ctx.raw/total*100)}%)`}},
+        datalabels: {
+          color: '#fff',
+          font: {size: 11, weight: 'bold'},
+          formatter: (value, ctx) => {
+            const pct = Math.round(value / total * 100);
+            return pct >= 5 ? `${value}
+${pct}%` : '';  // не показываем для маленьких секторов
+          },
+          textAlign: 'center',
+          display: ctx => {
+            const pct = Math.round(ctx.dataset.data[ctx.dataIndex] / total * 100);
+            return pct >= 5;
+          }
+        }
+      }
+    }
+  }));
+
+  // Stacked bar с подписями на сегментах
+  const changeTypes = ['Редактирование','Создание','Удаление','Система'];
+  const changeColors = ['#4f8ef7','#34d399','#f87171','#9ca3af'];
+  statsCharts.push(new Chart(document.getElementById('chartBar'), {
+    type: 'bar',
+    plugins: [ChartDataLabels],
+    data: {
+      labels: objSummary.map(o => o.type),
+      datasets: changeTypes.map((ct, i) => ({
+        label: ct,
+        data: objSummary.map(o => o.breakdown[ct] || 0),
+        backgroundColor: changeColors[i] + 'aa',
+        borderColor: changeColors[i], borderWidth: 1, borderRadius: 3
+      }))
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: {stacked:true, ticks:{color:textColor,font:{size:9}}, grid:{color:gridColor}},
+        y: {stacked:true, ticks:{color:textColor,font:{size:9}}, grid:{color:gridColor}}
+      },
+      plugins: {
+        legend:{labels:{color:textColor, font:{size:10}, boxWidth:11}},
+        datalabels: {
+          color: '#fff',
+          font: {size: 9, weight: 'bold'},
+          formatter: value => value > 0 ? value : '',
+          display: ctx => ctx.dataset.data[ctx.dataIndex] > 0,
+          anchor: 'center', align: 'center'
+        }
+      }
+    }
+  }));
+
+  // Users horizontal bar с подписями значений
+  statsCharts.push(new Chart(document.getElementById('chartUsers'), {
+    type: 'bar',
+    plugins: [ChartDataLabels],
+    data: {
+      labels: topUsers.map(u => u[0]),
+      datasets: [{
+        data: topUsers.map(u => u[1]),
+        backgroundColor: topUsers.map((_, i) => `hsl(${210+i*28},65%,${isDark?55:45}%)`),
+        borderRadius: 3, borderWidth: 0
+      }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      scales: {
+        x: {ticks:{color:textColor,font:{size:9}}, grid:{color:gridColor}},
+        y: {ticks:{color:textColor,font:{size:9}}, grid:{display:false}}
+      },
+      plugins: {
+        legend:{display:false},
+        datalabels: {
+          color: textColor,
+          font: {size: 10, weight: 'bold'},
+          anchor: 'end', align: 'end',
+          formatter: value => value,
+          offset: 4
+        }
+      }
+    }
+  }));
+
+  // Sign donut chart
+  if (document.getElementById('chartSign') && signEntries.length + signNotSet > 0) {
+    const signLabels = signEntries.map(([k]) => k).concat(signNotSet > 0 ? ['Не указан'] : []);
+    const signData   = signEntries.map(([,v]) => v).concat(signNotSet > 0 ? [signNotSet] : []);
+    const signColors = signLabels.map((_, i) =>
+      i === signLabels.length - 1 && signNotSet > 0
+        ? (isDark ? 'rgba(107,114,128,0.35)' : 'rgba(156,163,175,0.5)')
+        : `hsl(${(30 + i * 47) % 360},65%,${isDark ? 56 : 46}%)`
+    );
+    const signTotal2 = signData.reduce((a, b) => a + b, 0);
+    statsCharts.push(new Chart(document.getElementById('chartSign'), {
+      type: 'doughnut',
+      plugins: [ChartDataLabels],
+      data: {
+        labels: signLabels,
+        datasets: [{
+          data: signData,
+          backgroundColor: signColors,
+          borderWidth: 2,
+          borderColor: isDark ? '#181c27' : '#fff'
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '55%',
+        plugins: {
+          legend: { position: 'right', labels: { color: textColor, font: { size: 10 }, boxWidth: 11 } },
+          tooltip: { callbacks: { label: ctx => `${ctx.label}: ${ctx.raw}` } },
+          datalabels: {
+            color: '#fff',
+            font: { size: 10, weight: 'bold' },
+            textAlign: 'center',
+            formatter: (value) => {
+              const pct = Math.round(value / signTotal2 * 100);
+              return pct >= 5 ? `${value}
+${pct}%` : (pct >= 3 ? String(value) : '');
+            },
+            display: ctx => Math.round(ctx.dataset.data[ctx.dataIndex] / signTotal2 * 100) >= 3
+          }
+        }
+      }
+    }));
+  }
+
+}
+
+function closeStats() {
+  document.getElementById('statsOverlay').classList.remove('open');
+  statsCharts.forEach(c => c.destroy()); statsCharts = [];
+}
+function closeStatsOverlay(e) {
+  if (e.target === document.getElementById('statsOverlay')) closeStats();
+}
+
+// ── Excel ─────────────────────────────────────────────────────────
+function exportExcel() {
+  const rows = document.querySelectorAll('#logTable tbody tr');
+  const headers = ['Начало периода','Конец периода','Тип периода','Время действия','Пользователь','Тип объекта',
+    'Имя объекта','Изменение','Атрибут','До','После','Отменено','Комментарий','Признак'];
+  const wb = XLSX.utils.book_new(), ws = {};
+  const range = {s:{r:0,c:0}, e:{r:0,c:headers.length-1}};
+  headers.forEach((h,c) => { ws[XLSX.utils.encode_cell({r:0,c})] = {v:h,t:'s'}; });
+  let R = 1;
+  rows.forEach(row => {
+    if (row.style.display === 'none') return;
+    const cells = row.querySelectorAll('td');
+    const commentCell = row.querySelector('.comment-view');
+    const commentText = commentCell?.dataset?.commentText || '';
+    const signCell    = row.querySelector('.sign-view');
+    const signText    = signCell?.dataset?.signText || '';
+    const getCell = (td) => td?.querySelector('.cell-clip')?.textContent?.trim() || td?.textContent?.trim() || '';
+    // cells[0] = "ДД.ММ.ГГГГ → ДД.ММ.ГГГГ", разбиваем на две части
+    const periodRaw   = getCell(cells[0]);
+    const periodParts = periodRaw.split('→').map(s => s.trim());
+    const dateStart   = periodParts[0] || '';
+    const dateEnd     = periodParts[1] || '';
+    const vals = [
+      dateStart, dateEnd,
+      getCell(cells[1]), getCell(cells[2]), getCell(cells[3]),
+      getCell(cells[4]), getCell(cells[5]), getCell(cells[6]),
+      getCell(cells[7]), getCell(cells[8]), getCell(cells[9]),
+      getCell(cells[10]), commentText, signText
+    ];
+    vals.forEach((v,c) => { ws[XLSX.utils.encode_cell({r:R,c})] = {v:v,t:'s'}; });
+    if (R > range.e.r) range.e.r = R;
+    R++;
+  });
+  range.e.r = R - 1;
+  ws['!ref'] = XLSX.utils.encode_range(range);
+  ws['!cols'] = [{wch:13},{wch:13},{wch:13},{wch:18},{wch:16},{wch:13},{wch:36},
+                 {wch:15},{wch:36},{wch:13},{wch:13},{wch:8},{wch:40},{wch:20}];
+  ws['!freeze'] = {xSplit:0,ySplit:1,topLeftCell:'A2',activePane:'bottomLeft'};
+  XLSX.utils.book_append_sheet(wb, ws, 'Журнал');
+  XLSX.writeFile(wb, `АССМБ_{{ start }}_{{ end }}.xlsx`);
+  // Логируем выгрузку
+  fetch('/api/log_action', {
+    method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action: 'export_excel', detail: '{{ start }} → {{ end }}'})
+  }).catch(() => {});
+}
+</script>
+</body>
+</html>

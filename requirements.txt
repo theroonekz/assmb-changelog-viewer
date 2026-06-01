@@ -1,0 +1,7 @@
+fastapi
+uvicorn
+pyodbc
+bcrypt
+python-dotenv
+starlette
+jinja2

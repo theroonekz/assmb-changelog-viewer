@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Выбор периода — АССМБ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Unbounded:wght@300;600&display=swap');
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+  :root[data-theme="dark"]{--bg:#0f1117;--surface:#181c27;--surface2:#1e2435;--border:#2a2f3d;--accent:#4f8ef7;--text:#e2e6f0;--muted:#6b7280;--green:#34d399;--yellow:#fbbf24;--grid:rgba(79,142,247,.03)}
+  :root[data-theme="light"]{--bg:#f0f2f8;--surface:#fff;--surface2:#f8faff;--border:#d1d8e8;--accent:#2563eb;--text:#1e293b;--muted:#64748b;--green:#059669;--yellow:#d97706;--grid:rgba(37,99,235,.03)}
+
+  body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;transition:background .3s,color .3s}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+
+  header{position:relative;z-index:1;display:flex;align-items:center;justify-content:space-between;padding:14px 28px;border-bottom:1px solid var(--border);background:var(--bg);transition:background .3s,border-color .3s;flex-wrap:wrap;gap:10px}
+  .logo-text{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:600;letter-spacing:.12em;color:var(--accent);text-transform:uppercase}
+  .logo-sub{font-size:11px;color:var(--muted);margin-top:2px}
+
+  .header-right{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .user-block{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+  .user-name{font-size:13px;color:var(--text)}
+  .user-desc{font-size:10px;color:var(--muted)}
+
+  .btn-outline{color:var(--muted);text-decoration:none;font-size:11px;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--border);padding:6px 12px;border-radius:4px;cursor:pointer;background:transparent;font-family:'JetBrains Mono',monospace;transition:all .2s;white-space:nowrap}
+  .btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+  .btn-admin{border-color:rgba(251,191,36,.4);color:var(--yellow)}
+  .btn-admin:hover{border-color:var(--yellow);background:rgba(251,191,36,.08)}
+
+  .theme-wrap{display:flex;align-items:center;gap:8px;font-size:11px;color:var(--muted)}
+
+/* 3D-минималистичные кнопки */
+  .btn-3d{
+    display:inline-flex;align-items:center;gap:5px;
+    border:none;border-radius:7px;padding:6px 15px;
+    font-family:'Unbounded',sans-serif;font-size:9px;font-weight:700;
+    letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+    transition:all .15s;position:relative;white-space:nowrap;
+  }
+  .btn-3d:active{transform:translateY(2px)}
+
+  .btn-3d-admin{
+    background:linear-gradient(160deg,#ff5b1a 0%,#ff6224 60%,#fc6f38 100%);
+    color:#fff;
+    box-shadow:0 4px 0 #d1430a, 0 6px 12px rgba(109,40,217,.35);
+  }
+  .btn-3d-admin:hover{box-shadow:0 3px 0 #ff6224, 0 5px 10px rgba(109,40,217,.35);transform:translateY(1px)}
+  .btn-3d-admin:active{box-shadow:0 1px 0 #ff6224, 0 2px 6px rgba(109,40,217,.25);transform:translateY(3px)}
+  
+  .btn-3d-logout{
+    background:linear-gradient(160deg,#ff6161 0%,#ff2424 60%,#ff0000 100%);
+    color:#fff;
+    box-shadow:0 4px 0 #961432, 0 6px 12px rgba(5,150,105,.35);
+  }
+  .btn-3d-logout:hover{box-shadow:0 3px 0 #065f46, 0 5px 10px rgba(5,150,105,.3);transform:translateY(1px)}
+  .btn-3d-logout:active{box-shadow:0 1px 0 #065f46, 0 2px 6px rgba(5,150,105,.2);transform:translateY(3px)}
+
+	.btn-3d-docs {
+	  /* Градиент: от светлого лазурного к насыщенному синему */
+	  background: linear-gradient(160deg, #4facfe 0%, #0072ff 60%, #0052cc 100%);
+	  color: #fff;
+	  /* Темно-синяя подложка для эффекта объема */
+	  box-shadow: 0 4px 0 #003d99, 0 6px 12px rgba(0, 114, 255, .35);
+	}
+
+	.btn-3d-docs:hover {
+	  /* Немного уменьшаем тень при наведении */
+	  box-shadow: 0 3px 0 #002d7a, 0 5px 10px rgba(0, 114, 255, .3);
+	  transform: translateY(1px);
+	}
+
+	.btn-3d-docs:active {
+	  /* Минимальная тень при нажатии */
+	  box-shadow: 0 1px 0 #002d7a, 0 2px 6px rgba(0, 114, 255, .2);
+	  transform: translateY(3px);
+}
+
+/* ── 3D Тумблер темы ── */
+  .theme-block { display: flex; align-items: center; gap: 10px; }
+  .theme-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+
+  .switch-3d {
+    position: relative; display: inline-block;
+    width: 54px; height: 26px; cursor: pointer;
+  }
+  .switch-3d input { opacity: 0; width: 0; height: 0; }
+
+  .slider-3d {
+    position: absolute; inset: 0;
+    background: linear-gradient(160deg, #808080 0%, #575757 100%);
+    border-radius: 34px; transition: .3s;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4), 0 4px 0 #404040;
+  }
+
+  /* Круг внутри тумблера */
+  .slider-3d:before {
+    position: absolute; content: "";
+    height: 18px; width: 18px; left: 4px; bottom: 4px;
+    background: white; border-radius: 50%; transition: .3s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+
+  /* Состояние "Включено" (Dark Mode) */
+  input:checked + .slider-3d {
+    background: linear-gradient(160deg, #b89afa 0%, #7c3aed 60%);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 4px 0 #4c1d95, 0 0 10px rgba(124, 58, 237, 0.4);
+  }
+
+  input:checked + .slider-3d:before { transform: translateX(28px); }
+
+  .switch-3d:active .slider-3d { transform: translateY(2px); box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 2px 0 #4c1d95; }
+
+
+  main{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:36px 24px}
+  .page-title{font-family:'Unbounded',sans-serif;font-weight:300;font-size:24px;margin-bottom:6px}
+  .page-sub{font-size:12px;color:var(--muted);margin-bottom:36px}
+
+  .columns{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+  @media(max-width:680px){.columns{grid-template-columns:1fr}}
+
+  .col-title{font-size:10px;text-transform:uppercase;letter-spacing:.12em;color:var(--muted);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+  .col-badge{font-size:10px;font-family:'Unbounded',sans-serif;font-weight:600;padding:2px 8px;border-radius:3px}
+  .badge-daily{background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.25)}
+  .badge-cum{background:rgba(251,191,36,.12);color:var(--yellow);border:1px solid rgba(251,191,36,.25)}
+
+  .period-list{display:flex;flex-direction:column;gap:5px;max-height:72vh;overflow-y:auto;padding-right:4px}
+  .period-list::-webkit-scrollbar{width:4px}
+  .period-list::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+
+  .period-card{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:10px 14px;display:flex;align-items:center;justify-content:space-between;text-decoration:none;color:var(--text);transition:border-color .2s,background .2s;cursor:pointer}
+  .period-card:hover{border-color:var(--accent);background:var(--surface2)}
+  .period-dates{font-size:12px}
+  .period-dates .sep{color:var(--muted);margin:0 6px}
+  .arrow{color:var(--muted);font-size:13px}
+  .empty{color:var(--muted);font-size:12px;padding:10px 0}
+
+  /* ── Оверлей загрузки ── */
+  .loading-overlay{display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);align-items:center;justify-content:center;flex-direction:column;gap:20px}
+  .loading-overlay.open{display:flex}
+  .loading-spinner{width:44px;height:44px;border:3px solid rgba(79,142,247,.25);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-text{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:300;color:#e2e6f0;letter-spacing:.06em}
+  .loading-sub{font-size:11px;color:#6b7280}
+  
+  /* Кнопка открытия календаря — видна в обеих темах */
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    cursor: pointer;
+    border-radius: 3px;
+    padding: 2px;
+    filter: invert(0.4);
+    transition: filter .2s;
+  }
+  :root[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(0.3) sepia(1) saturate(3) hue-rotate(190deg);
+  }
+  input[type="date"]::-webkit-calendar-picker-indicator:hover {
+    filter: invert(0.2) sepia(1) saturate(5) hue-rotate(190deg);
+    background: rgba(79,142,247,.12);
+  }
+  /* Быстрые кнопки месяцев */
+  .month-btn {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 4px;
+    padding: 4px 10px;
+    cursor: pointer;
+    transition: all .2s;
+    white-space: nowrap;
+  }
+  .month-btn:hover { border-color: var(--accent); color: var(--accent); background: rgba(79,142,247,.08); }
+  .month-year-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--muted);
+    padding: 4px 6px;
+    align-self: center;
+  }
+</style>
+<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'light')</script>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo-text">
+		АССМБ · Журнал изменений
+		<a href="/docs_page" style="text-decoration: none;"> <button class="btn-3d btn-3d-docs">Документация</button></a>
+	
+	</div>
+    <div class="logo-sub">История действия пользователей</div>
+  </div>
+  <div class="header-right">
+        <!-- Тема -->
+    <div class="theme-block">
+      <span class="theme-label-3d">Тёмная тема:</span>
+      <label class="switch-3d">
+        <input type="checkbox" id="themeToggle" onclick="toggleTheme()">
+        <span class="slider-3d"></span>
+      </label>
+    </div>
+    {% if user.access >= 3 %}
+    <a href="/admin" style="text-decoration: none;"> <button class="btn-3d btn-3d-admin">Админ панель</button></a>
+    {% endif %}
+	<a href="/logout" style="text-decoration: none;"> <button class="btn-3d btn-3d-logout">Выйти</button></a>
+  </div>
+</header>
+
+<main>
+  <!-- Приветствие — по центру, над заголовком -->
+  <div style="text-align:center;margin-bottom:32px;padding-bottom:28px;border-bottom:1px solid var(--border)">
+    <div style="font-family:'Unbounded',sans-serif;font-size:22px;font-weight:300;color:var(--text);margin-bottom:6px">
+      Здравствуйте, <span style="font-weight:600;color:var(--accent)">{{ user.fullname }}</span>
+    </div>
+    <div style="font-size:12px;color:var(--muted)">
+      Ваш статус: <span style="color:var(--text);font-weight:600">{{ user.access_label }}</span>
+      <span style="margin:0 6px;opacity:.4">·</span>
+      <span>{{ user.access_desc }}</span>
+    </div>
+  </div>
+
+  <div class="page-title">Выбор периода</div>
+  <div class="page-sub">Нажмите на нужный период для просмотра журнала изменений</div>
+
+  <!-- ── Произвольный период ── -->
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:20px 24px;margin-bottom:28px">
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);margin-bottom:14px">
+      📅 Просмотр истории за произвольный период
+    </div>
+	    <div style="font-size:11px;color:var(--muted);margin-top:10px">
+      <b>Показывает все суточные и накопительные периоды внутри указанного диапазона</b>
+    </div>
+	<br>
+    <div style="display:flex;align-items:flex-end;gap:12px;flex-wrap:wrap">
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Начало</label>
+        <input type="date" id="customStart" style="background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:8px 12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;color-scheme:light dark;transition:border-color .2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <div style="display:flex;flex-direction:column;gap:5px">
+        <label style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)">Конец</label>
+        <input type="date" id="customEnd" style="background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:8px 12px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;color-scheme:light dark;transition:border-color .2s" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
+      </div>
+      <button onclick="openCustomPeriod()" style="background:var(--accent);color:#fff;border:none;border-radius:5px;padding:9px 20px;font-family:'Unbounded',sans-serif;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:opacity .2s;white-space:nowrap" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">
+        Открыть
+      </button>
+    </div>
+	
+	<br>
+
+	<!-- Быстрый выбор по месяцам -->
+    <div style="border-top:1px solid var(--border);padding-top:14px">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:10px">
+        Быстрый выбор месяца:
+      </div>
+      <div id="monthButtons" style="display:flex;flex-wrap:wrap;gap:6px">
+        <!-- Генерируется JS -->
+      </div>
+    </div>	
+  </div>
+
+  <!-- ── Модалка подтверждения ── -->
+  <div id="confirmOverlay" style="display:none;position:fixed;inset:0;z-index:999;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center" onclick="closeConfirm(event)">
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:28px 32px;max-width:420px;width:100%;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+      <div style="font-family:'Unbounded',sans-serif;font-size:13px;font-weight:600;margin-bottom:14px;color:var(--text)">Подтверждение</div>
+      <div style="font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px" id="confirmText"></div>
+      <div style="font-size:11px;color:var(--muted);background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:9px 12px;margin-bottom:20px">
+        ⚠️ Загрузка большого диапазона может занять до 1 минуты
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end">
+        <button onclick="closeConfirmModal()" style="background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:5px;padding:8px 18px;font-family:'JetBrains Mono',monospace;font-size:11px;cursor:pointer;transition:all .2s" onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">Отмена</button>
+        <button onclick="confirmAndLoad()" style="background:var(--accent);color:#fff;border:none;border-radius:5px;padding:8px 20px;font-family:'Unbounded',sans-serif;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:opacity .2s" onmouseover="this.style.opacity='.85'" onmouseout="this.style.opacity='1'">Подтвердить</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="columns">
+    <div>
+      <div class="col-title"><span class="col-badge badge-daily">Суточный</span> Суточные периоды</div>
+      <div class="period-list">
+        {% if daily %}{% for p in daily %}
+        <a class="period-card" href="/logs?start={{ p.start }}&end={{ p.end }}" onclick="showLoading(event, this)">
+          <div class="period-dates">
+            {{ p.start[8:10] }}.{{ p.start[5:7] }}.{{ p.start[0:4] }}
+            <span class="sep">→</span>
+            {{ p.end[8:10] }}.{{ p.end[5:7] }}.{{ p.end[0:4] }}
+          </div>
+          <span class="arrow">›</span>
+        </a>
+        {% endfor %}{% else %}<div class="empty">Нет данных</div>{% endif %}
+      </div>
+    </div>
+    <div>
+      <div class="col-title"><span class="col-badge badge-cum">Накопительный</span> Накопительные периоды</div>
+      <div class="period-list">
+        {% if cumulative %}{% for p in cumulative %}
+        <a class="period-card" href="/logs?start={{ p.start }}&end={{ p.end }}" onclick="showLoading(event, this)">
+          <div class="period-dates">
+            {{ p.start[8:10] }}.{{ p.start[5:7] }}.{{ p.start[0:4] }}
+            <span class="sep">→</span>
+            {{ p.end[8:10] }}.{{ p.end[5:7] }}.{{ p.end[0:4] }}
+          </div>
+          <span class="arrow">›</span>
+        </a>
+        {% endfor %}{% else %}<div class="empty">Нет данных</div>{% endif %}
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- Оверлей загрузки -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Загрузка периода...</div>
+  <div class="loading-sub">Пожалуйста, подождите — обрабатываем данные</div>
+</div>
+
+<script>
+  // ── Тема ──────────────────────────────────────────────────────────
+const html = document.documentElement;
+const themeToggle = document.getElementById('themeToggle');
+
+// Инициализация при загрузке
+const savedTheme = localStorage.getItem('theme') || 'dark';
+setTheme(savedTheme);
+
+function setTheme(t) {
+  html.setAttribute('data-theme', t);
+  localStorage.setItem('theme', t);
+  
+  // Устанавливаем положение тумблера
+  if (themeToggle) {
+    themeToggle.checked = (t === 'dark');
+  }
+}
+
+function toggleTheme() {
+  const newTheme = themeToggle.checked ? 'dark' : 'light';
+  setTheme(newTheme);
+}
+
+  function showLoading(e, el){
+    document.getElementById('loadingOverlay').classList.add('open');
+    setTimeout(()=>{ window.location.href = el.href; }, 50);
+    e.preventDefault();
+  }
+
+  // ── Произвольный период ──
+  let _customStart = '', _customEnd = '';
+
+  function openCustomPeriod() {
+    const s = document.getElementById('customStart').value;
+    const e = document.getElementById('customEnd').value;
+    if (!s || !e) { alert('Укажите обе даты'); return; }
+    if (s > e) { alert('Дата начала не может быть позже даты конца'); return; }
+    _customStart = s; _customEnd = e;
+
+    // Форматируем дату для показа пользователю
+    const fmt = d => d.split('-').reverse().join('.');
+    document.getElementById('confirmText').innerHTML =
+      `Вы подтверждаете, что хотите открыть историю изменений за период:<br><br>` +
+      `<b style="color:var(--text)">${fmt(s)} — ${fmt(e)}</b><br><br>` +
+      `Будут показаны все суточные и накопительные периоды в этом диапазоне.`;
+
+    document.getElementById('confirmOverlay').style.display = 'flex';
+  }
+
+  function closeConfirm(e) {
+    if (e.target === document.getElementById('confirmOverlay')) closeConfirmModal();
+  }
+
+  function closeConfirmModal() {
+    document.getElementById('confirmOverlay').style.display = 'none';
+  }
+
+  function confirmAndLoad() {
+    closeConfirmModal();
+    document.getElementById('loadingOverlay').classList.add('open');
+    setTimeout(() => {
+      window.location.href = `/logs_custom?start=${_customStart}&end=${_customEnd}`;
+    }, 50);
+  }
+  
+  // ── Быстрый выбор месяца ──────────────────────────────────────────
+  function buildMonthButtons() {
+    const container = document.getElementById('monthButtons');
+    if (!container) return;
+
+    const now      = new Date();
+    const curYear  = now.getFullYear();
+    const curMonth = now.getMonth(); // 0-based
+
+    const MONTHS = ['Янв','Фев','Мар','Апр','Май','Июн',
+                    'Июл','Авг','Сен','Окт','Ноя','Дек'];
+
+    // Показываем текущий год и предыдущий
+    let html = '';
+    for (let year = curYear; year >= curYear - 1; year--) {
+      const maxMonth = (year === curYear) ? curMonth : 11; // до текущего месяца
+      if (maxMonth < 0) continue;
+
+      html += `<span class="month-year-label">${year}:</span>`;
+
+      for (let m = 0; m <= maxMonth; m++) {
+        // Начало месяца: 1-е число
+        const startDate = `${year}-${String(m + 1).padStart(2,'0')}-01`;
+        // Конец месяца: 1-е число следующего месяца
+        const nextMonth = m === 11 ? 0 : m + 1;
+        const nextYear  = m === 11 ? year + 1 : year;
+        const endDate   = `${nextYear}-${String(nextMonth + 1).padStart(2,'0')}-01`;
+
+        html += `<button class="month-btn"
+          onclick="selectMonth('${startDate}','${endDate}','${MONTHS[m]} ${year}')"
+          title="${MONTHS[m]} ${year}: с 01.${String(m+1).padStart(2,'0')}.${year} по 01.${String(nextMonth+1).padStart(2,'0')}.${nextYear}">
+          ${MONTHS[m]}
+        </button>`;
+      }
+
+      // Разрыв между годами
+      if (year > curYear - 1) html += '<div style="width:100%;height:0"></div>';
+    }
+
+    container.innerHTML = html;
+  }
+
+  function selectMonth(startDate, endDate, label) {
+    // Заполняем поля дат
+    document.getElementById('customStart').value = startDate;
+    document.getElementById('customEnd').value   = endDate;
+
+    // Показываем модалку подтверждения
+    _customStart = startDate; _customEnd = endDate;
+    const fmt = d => d.split('-').reverse().join('.');
+    document.getElementById('confirmText').innerHTML =
+      `Вы подтверждаете, что хотите открыть историю изменений за период:<br><br>` +
+      `<b style="color:var(--text)">${label}</b><br>` +
+      `(${fmt(startDate)} — ${fmt(endDate)})<br><br>` +
+      `Будут показаны все периоды внутри этого диапазона.`;
+    document.getElementById('confirmOverlay').style.display = 'flex';
+  }
+
+  // Строим кнопки месяцев при загрузке
+  buildMonthButtons();
+</script>
+</body>
+</html>

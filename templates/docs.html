@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Инструкция — АССМБ Журнал изменений</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Geologica:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:        #f7f8fc;
+    --surface:   #ffffff;
+    --surface2:  #f0f3fa;
+    --border:    #e2e8f4;
+    --border2:   #cdd5e8;
+    --accent:    #2563eb;
+    --accent-l:  #dbeafe;
+    --accent2:   #059669;
+    --accent2-l: #d1fae5;
+    --yellow:    #d97706;
+    --yellow-l:  #fef3c7;
+    --red:       #dc2626;
+    --red-l:     #fee2e2;
+    --purple:    #7c3aed;
+    --purple-l:  #ede9fe;
+    --text:      #0f172a;
+    --text2:     #334155;
+    --muted:     #64748b;
+    --muted2:    #94a3b8;
+    --mono:      'JetBrains Mono', monospace;
+    --sans:      'Geologica', sans-serif;
+  }
+
+  /* ── СКРОЛЛ ── */
+  html { scroll-behavior: smooth; }
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    font-size: 15px;
+    line-height: 1.75;
+    min-height: 100vh;
+  }
+
+  /* ── СЕТКА ── */
+  .layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    min-height: 100vh;
+  }
+
+  /* ── БОКОВОЕ МЕНЮ ── */
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 0;
+  }
+
+  .sidebar-logo {
+    padding: 24px 20px 20px;
+    border-bottom: 1px solid var(--border);
+  }
+  .sidebar-logo-title {
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 500;
+    letter-spacing: .15em;
+    text-transform: uppercase;
+    color: var(--accent);
+  }
+  .sidebar-logo-sub {
+    font-size: 12px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .sidebar-section {
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--muted2);
+    padding: 20px 20px 6px;
+  }
+
+  .sidebar nav a {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 8px 20px;
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--text2);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    transition: all .15s;
+  }
+  .sidebar nav a .nav-ico { font-size: 14px; opacity: .7; }
+  .sidebar nav a:hover { color: var(--accent); background: var(--accent-l); border-left-color: var(--accent); }
+  .sidebar nav a.active { color: var(--accent); background: var(--accent-l); border-left-color: var(--accent); font-weight: 500; }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+  }
+  .back-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--accent);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 7px;
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: opacity .2s;
+  }
+  .back-btn:hover { opacity: .88; }
+
+  /* ── КОНТЕНТ ── */
+  .content {
+    max-width: 820px;
+    padding: 52px 56px 80px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    margin-bottom: 52px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid var(--border);
+  }
+  .hero-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-l);
+    color: var(--accent);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    text-transform: uppercase;
+    padding: 4px 12px;
+    border-radius: 20px;
+    margin-bottom: 18px;
+  }
+  .hero-title {
+    font-size: 38px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.15;
+    margin-bottom: 16px;
+    letter-spacing: -.5px;
+  }
+  .hero-title span { color: var(--accent); }
+  .hero-lead {
+    font-size: 16px;
+    color: var(--text2);
+    max-width: 580px;
+    line-height: 1.7;
+  }
+
+  /* ── СЕКЦИИ ── */
+  section { scroll-margin-top: 28px; margin-bottom: 56px; }
+
+  h2 {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text);
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    letter-spacing: -.3px;
+  }
+  h2 .h2-ico {
+    width: 38px; height: 38px;
+    background: var(--accent-l);
+    color: var(--accent);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text);
+    margin: 28px 0 10px;
+  }
+
+  p { color: var(--text2); margin-bottom: 14px; }
+  p b, p strong { color: var(--text); font-weight: 600; }
+  p:last-child { margin-bottom: 0; }
+
+  /* ── КАРТОЧКИ ДОСТУПА ── */
+  .access-grid { display: flex; flex-direction: column; gap: 12px; margin: 18px 0 28px; }
+  .access-card {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 18px 20px;
+    transition: box-shadow .2s;
+  }
+  .access-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.06); }
+  .access-num {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 600;
+    width: 40px;
+    height: 40px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .num-0 { background: #f1f5f9; color: #64748b; }
+  .num-1 { background: var(--accent-l); color: var(--accent); }
+  .num-2 { background: var(--accent2-l); color: var(--accent2); }
+  .access-info { flex: 1; }
+  .access-name { font-size: 15px; font-weight: 600; color: var(--text); margin-bottom: 4px; }
+  .access-desc { font-size: 13px; color: var(--muted); line-height: 1.55; }
+  .access-tags { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px; }
+  .tag {
+    font-size: 11px; font-weight: 500;
+    padding: 2px 9px; border-radius: 20px;
+    border: 1px solid;
+  }
+  .tag-yes { background: var(--accent2-l); color: var(--accent2); border-color: #a7f3d0; }
+  .tag-no  { background: #f1f5f9; color: var(--muted); border-color: var(--border2); }
+  .tag-own { background: var(--yellow-l); color: var(--yellow); border-color: #fde68a; }
+
+  /* ── ШАГИ ── */
+  .steps { margin: 16px 0 24px; }
+  .step {
+    display: flex; gap: 14px; margin-bottom: 14px;
+    align-items: flex-start;
+  }
+  .step-num {
+    width: 26px; height: 26px;
+    background: var(--accent);
+    color: #fff;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px; font-weight: 700;
+    flex-shrink: 0; margin-top: 2px;
+    font-family: var(--mono);
+  }
+  .step-body { font-size: 14px; color: var(--text2); }
+  .step-body b { color: var(--text); }
+
+  /* ── CALLOUT-БЛОКИ ── */
+  .callout {
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin: 18px 0;
+    display: flex;
+    gap: 13px;
+    align-items: flex-start;
+  }
+  .callout-ico { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+  .callout-body { font-size: 14px; color: var(--text2); line-height: 1.6; }
+  .callout-body b { color: var(--text); }
+  .info    { background: var(--accent-l); border: 1px solid #bfdbfe; }
+  .success { background: var(--accent2-l); border: 1px solid #a7f3d0; }
+  .warn    { background: var(--yellow-l); border: 1px solid #fde68a; }
+
+  /* ── ТАБЛИЦА ── */
+  .tbl-wrap { overflow-x: auto; margin: 18px 0 24px; border-radius: 10px; border: 1px solid var(--border); }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  thead th {
+    text-align: left;
+    font-size: 10px; font-weight: 600;
+    text-transform: uppercase; letter-spacing: .1em;
+    color: var(--muted);
+    padding: 12px 16px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+  }
+  tbody td {
+    padding: 11px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+    vertical-align: top;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr:hover td { background: var(--surface2); }
+  td:first-child { color: var(--text); font-weight: 500; }
+
+  /* ── КБД ── */
+  kbd {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    padding: 2px 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text);
+    box-shadow: 0 2px 0 var(--border2);
+    white-space: nowrap;
+  }
+
+  /* ── FEATURE CARDS ── */
+  .feature-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 18px 0 28px; }
+  .feature-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: box-shadow .2s, border-color .2s;
+  }
+  .feature-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.07); border-color: var(--border2); }
+  .fc-ico { font-size: 24px; margin-bottom: 12px; }
+  .fc-title { font-size: 14px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .fc-desc { font-size: 13px; color: var(--muted); line-height: 1.55; }
+
+  /* ── BADGE ── */
+  .badge {
+    display: inline-block;
+    font-size: 11px; font-weight: 600;
+    padding: 2px 9px; border-radius: 4px;
+    vertical-align: middle; margin: 0 2px;
+  }
+  .b-blue   { background: var(--accent-l);   color: var(--accent); }
+  .b-green  { background: var(--accent2-l);  color: var(--accent2); }
+  .b-red    { background: var(--red-l);      color: var(--red); }
+  .b-gray   { background: #f1f5f9;           color: #475569; }
+  .b-purple { background: var(--purple-l);   color: var(--purple); }
+  .b-yellow { background: var(--yellow-l);   color: var(--yellow); }
+
+  /* ── РАЗДЕЛИТЕЛЬ ── */
+  hr { border: none; border-top: 1px solid var(--border); margin: 44px 0; }
+
+  /* ── АДАПТИВ ── */
+  @media (max-width: 900px) {
+    .layout { grid-template-columns: 1fr; }
+    .sidebar { position: static; height: auto; }
+    .content { padding: 32px 24px 60px; }
+    .feature-grid { grid-template-columns: 1fr; }
+    .hero-title { font-size: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="layout">
+
+  <!-- ── БОКОВОЕ МЕНЮ ── -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-title">АССМБ · Журнал</div>
+      <div class="sidebar-logo-sub">Инструкция пользователя</div>
+    </div>
+
+    <div class="sidebar-section">Начало работы</div>
+    <nav>
+      <a href="#intro"   class="active"><span class="nav-ico">📋</span> О системе</a>
+      <a href="#access" ><span class="nav-ico">🔑</span> Права доступа</a>
+      <a href="#login"  ><span class="nav-ico">🚪</span> Вход в систему</a>
+    </nav>
+
+    <div class="sidebar-section">Главная страница</div>
+    <nav>
+      <a href="#main-page"><span class="nav-ico">🗓</span> Выбор периода</a>
+      <a href="#custom"   ><span class="nav-ico">📅</span> Произвольный период</a>
+    </nav>
+
+    <div class="sidebar-section">Журнал изменений</div>
+    <nav>
+      <a href="#table"    ><span class="nav-ico">📊</span> Таблица изменений</a>
+      <a href="#filters"  ><span class="nav-ico">🔍</span> Фильтрация и поиск</a>
+      <a href="#comments" ><span class="nav-ico">💬</span> Комментарии</a>
+      <a href="#signs"    ><span class="nav-ico">🏷</span> Признак</a>
+      <a href="#stats"    ><span class="nav-ico">📈</span> Статистика</a>
+      <a href="#excel"    ><span class="nav-ico">⬇</span> Выгрузка в Excel</a>
+    </nav>
+
+    <div class="sidebar-section">Справочник</div>
+    <nav>
+      <a href="#hotkeys"><span class="nav-ico">⌨</span> Горячие клавиши</a>
+      <a href="#faq"    ><span class="nav-ico">❓</span> Вопросы и ответы</a>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="/" class="back-btn">
+        ← Вернуться на главную
+      </a>
+    </div>
+  </aside>
+
+  <!-- ── ОСНОВНОЙ КОНТЕНТ ── -->
+  <main class="content">
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="hero-tag">📋 Инструкция пользователя</div>
+      <h1 class="hero-title">АССМБ<br><span>Журнал изменений</span></h1>
+      <p class="hero-lead">
+        Этот сервис позволяет просматривать историю ручных корректировок в программе АССМБ,
+        добавлять пояснения к каждому изменению и формировать отчётность для руководства.
+      </p>
+    </div>
+
+    <!-- ── О СИСТЕМЕ ── -->
+    <section id="intro">
+      <h2><div class="h2-ico">📋</div> О системе</h2>
+      <p>
+        Каждый раз когда экономист вносит ручную корректировку в программу АССМБ,
+        это фиксируется в журнале. <b>Веб-сервис Журнал изменений</b> позволяет
+        видеть все такие корректировки, объяснять их причины и формировать
+        аналитику по ним.
+      </p>
+
+      <div class="feature-grid">
+        <div class="feature-card">
+          <div class="fc-ico">👁</div>
+          <div class="fc-title">Просмотр истории</div>
+          <div class="fc-desc">Все ручные изменения за любой период — суточный, накопительный или произвольный диапазон дат.</div>
+        </div>
+        <div class="feature-card">
+          <div class="fc-ico">💬</div>
+          <div class="fc-title">Комментарии</div>
+          <div class="fc-desc">К каждому изменению можно добавить пояснение: почему была внесена корректировка.</div>
+        </div>
+        <div class="feature-card">
+          <div class="fc-ico">🏷</div>
+          <div class="fc-title">Признак</div>
+          <div class="fc-desc">Краткая категория изменения: Схема, Прибор, Технология — или свой вариант.</div>
+        </div>
+        <div class="feature-card">
+          <div class="fc-ico">📈</div>
+          <div class="fc-title">Статистика</div>
+          <div class="fc-desc">Графики по типам изменений, активности пользователей и распределению признаков.</div>
+        </div>
+      </div>
+    </section>
+
+    <hr>
+
+    <!-- ── ПРАВА ДОСТУПА ── -->
+    <section id="access">
+      <h2><div class="h2-ico">🔑</div> Права доступа</h2>
+      <p>
+        У каждого пользователя есть уровень доступа. Свой уровень можно увидеть
+        на главной странице под именем. От уровня зависит, что именно можно делать в системе.
+      </p>
+
+      <div class="access-grid">
+
+        <div class="access-card">
+          <div class="access-num num-0">0</div>
+          <div class="access-info">
+            <div class="access-name">Наблюдатель</div>
+            <div class="access-desc">
+              Может просматривать все периоды, читать комментарии и признаки других пользователей,
+              просматривать статистику и выгружать данные в Excel.
+              Добавлять или изменять комментарии и признаки <b>нельзя</b>.
+            </div>
+            <div class="access-tags">
+              <span class="tag tag-yes">✓ Просмотр</span>
+              <span class="tag tag-yes">✓ Статистика</span>
+              <span class="tag tag-yes">✓ Excel</span>
+              <span class="tag tag-no">✗ Комментарии</span>
+              <span class="tag tag-no">✗ Признаки</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="access-card">
+          <div class="access-num num-1">1</div>
+          <div class="access-info">
+            <div class="access-name">Пользователь</div>
+            <div class="access-desc">
+              Может всё то же что Наблюдатель, плюс добавлять и редактировать
+              комментарии и признаки — но <b>только к своим изменениям</b>.
+              Строка считается «своей», если в столбце «Пользователь» стоит ваше имя.
+              Чужие комментарии видны, но изменить их нельзя.
+            </div>
+            <div class="access-tags">
+              <span class="tag tag-yes">✓ Просмотр</span>
+              <span class="tag tag-yes">✓ Статистика</span>
+              <span class="tag tag-yes">✓ Excel</span>
+              <span class="tag tag-own">~ Свои комментарии</span>
+              <span class="tag tag-own">~ Свои признаки</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="access-card">
+          <div class="access-num num-2">2</div>
+          <div class="access-info">
+            <div class="access-name">Главный</div>
+            <div class="access-desc">
+              Полный доступ: может добавлять и редактировать комментарии и признаки
+              к <b>любым изменениям</b>, независимо от того, кто их внёс.
+              Это уровень для руководителей и ответственных сотрудников.
+            </div>
+            <div class="access-tags">
+              <span class="tag tag-yes">✓ Просмотр</span>
+              <span class="tag tag-yes">✓ Статистика</span>
+              <span class="tag tag-yes">✓ Excel</span>
+              <span class="tag tag-yes">✓ Все комментарии</span>
+              <span class="tag tag-yes">✓ Все признаки</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="callout warn">
+        <div class="callout-ico">⚠️</div>
+        <div class="callout-body">
+          Если вы не можете добавить комментарий или признак к строке —
+          скорее всего это чужая строка, а ваш уровень доступа равен 1.
+          Обратитесь к администратору, если нужно изменить уровень доступа.
+        </div>
+      </div>
+    </section>
+
+    <hr>
+
+    <!-- ── ВХОД ── -->
+    <section id="login">
+      <h2><div class="h2-ico">🚪</div> Вход в систему</h2>
+      <p>
+        Сервис открывается в браузере по адресу внутренней сети.
+        Логин и пароль выдаёт системный администратор.
+      </p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">Откройте браузер и перейдите по адресу системы</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">Введите <b>логин</b> и <b>пароль</b></div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">Нажмите кнопку <b>«Войти»</b></div>
+        </div>
+      </div>
+
+      <div class="callout info">
+        <div class="callout-ico">💡</div>
+        <div class="callout-body">
+          <b>Переключение темы</b> (светлая / тёмная) доступно прямо на странице входа
+          и на главной странице. Кнопка находится в правом верхнем углу.
+          Выбор сохраняется в браузере.
+        </div>
+      </div>
+
+      <div class="callout warn">
+        <div class="callout-ico">🔑</div>
+        <div class="callout-body">
+          <b>Забыли пароль?</b> Нажмите ссылку «Регистрация / Забыл пароль» на странице входа —
+          там указаны контакты администратора. Самостоятельно сбросить пароль нельзя.
+        </div>
+      </div>
+    </section>
+
+    <hr>
+
+    <!-- ── ГЛАВНАЯ СТРАНИЦА ── -->
+    <section id="main-page">
+      <h2><div class="h2-ico">🗓</div> Выбор периода</h2>
+      <p>
+        После входа открывается главная страница с приветствием и выбором периода.
+        Периоды разделены на два столбца.
+      </p>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Тип</th><th>Что это</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><span class="badge b-green">Суточный</span></td>
+              <td>Один рабочий день. Выходные дни система объединяет в один период.</td>
+            </tr>
+            <tr>
+              <td><span class="badge b-yellow">Накопительный</span></td>
+              <td>Период с 1-го числа месяца до последнего закрытого дня. Создаётся автоматически после каждого суточного.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p>Нажмите на любой период — откроется таблица изменений. Во время загрузки появится анимация.</p>
+
+      <div class="callout info">
+        <div class="callout-ico">⏳</div>
+        <div class="callout-body">
+          Накопительный период загружается дольше суточного — он содержит данные
+          за целый месяц. Подождите 20–60 секунд, страница загрузится.
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ПРОИЗВОЛЬНЫЙ ПЕРИОД ── -->
+    <section id="custom">
+      <h2><div class="h2-ico">📅</div> Произвольный период</h2>
+      <p>
+        Над списком периодов есть блок <b>«Просмотр истории за произвольный период»</b>.
+        Он позволяет открыть данные за любой диапазон дат.
+      </p>
+
+      <h3>Способ 1 — Ввести даты вручную</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">Нажмите на поле <b>«Начало»</b> — откроется календарь. Выберите дату начала.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">Нажмите на поле <b>«Конец»</b> — выберите дату окончания.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">Нажмите кнопку <b>«Открыть»</b>.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">Подтвердите запрос в появившемся окне.</div>
+        </div>
+      </div>
+
+      <h3>Способ 2 — Быстрый выбор месяца</h3>
+      <p>
+        Под полями дат расположены кнопки с названиями месяцев.
+        При нажатии на любой месяц (например <b>«Мар»</b>) —
+        поля дат заполняются автоматически (с 1-го по 1-е следующего месяца)
+        и открывается окно подтверждения.
+      </p>
+      <p>
+        Кнопки сгруппированы по годам. Отображаются текущий и прошлый год.
+      </p>
+
+      <div class="callout warn">
+        <div class="callout-ico">⚠️</div>
+        <div class="callout-body">
+          Произвольный период показывает <b>все</b> суточные и накопительные периоды
+          внутри выбранного диапазона. При большом диапазоне (несколько месяцев)
+          загрузка займёт больше времени.
+        </div>
+      </div>
+    </section>
+
+    <hr>
+
+    <!-- ── ТАБЛИЦА ── -->
+    <section id="table">
+      <h2><div class="h2-ico">📊</div> Таблица изменений</h2>
+      <p>
+        Таблица показывает все ручные изменения за выбранный период.
+        Каждая строка — одно изменение.
+      </p>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr><th>Столбец</th><th>Что означает</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Период</td>
+              <td>Даты начала и конца кейса (например: «01.03.2026 → 30.03.2026»)</td>
+            </tr>
+            <tr>
+              <td>Тип периода</td>
+              <td>Суточный или Накопительный</td>
+            </tr>
+            <tr>
+              <td>Время действия</td>
+              <td>Дата и время, когда было внесено изменение</td>
+            </tr>
+            <tr>
+              <td>Пользователь</td>
+              <td>Имя сотрудника, который внёс изменение</td>
+            </tr>
+            <tr>
+              <td>Тип объекта</td>
+              <td>Цветной ярлык: НОФ, Присадки, Операция, Жёсткая связь и т.д.</td>
+            </tr>
+            <tr>
+              <td>Имя объекта</td>
+              <td>Название конкретного объекта, в котором произведено изменение</td>
+            </tr>
+            <tr>
+              <td>Изменение</td>
+              <td>
+                <span class="badge b-blue">Создание</span>
+                <span class="badge b-green">Редактирование</span>
+                <span class="badge b-red">Удаление</span>
+                <span class="badge b-gray">Система</span>
+              </td>
+            </tr>
+            <tr>
+              <td>Атрибут</td>
+              <td>Что именно изменили (название поля или атрибута)</td>
+            </tr>
+            <tr>
+              <td>До</td>
+              <td>Значение поля <b>до</b> изменения</td>
+            </tr>
+            <tr>
+              <td>После</td>
+              <td>Значение поля <b>после</b> изменения</td>
+            </tr>
+            <tr>
+              <td>Отменено</td>
+              <td>Отметка, если действие было отменено (знак ✕)</td>
+            </tr>
+            <tr>
+              <td>Комментарий</td>
+              <td>Пояснение к изменению. Нажмите для добавления или редактирования.</td>
+            </tr>
+            <tr>
+              <td>Признак</td>
+              <td>Краткая категория изменения. Нажмите для добавления или выбора из списка.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Раскрытие длинного текста</h3>
+      <p>
+        Если текст в ячейке обрезан (длинное название объекта или атрибута) —
+        <b>нажмите на строку</b>, чтобы развернуть её и увидеть полный текст.
+        Повторный клик сворачивает строку обратно.
+      </p>
+
+      <div class="callout info">
+        <div class="callout-ico">💡</div>
+        <div class="callout-body">
+          Столбцы <b>Комментарий</b> и <b>Признак</b> всегда показываются полностью.
+          Клик по ним <b>не раскрывает</b> строку — он открывает окно редактирования.
+        </div>
+      </div>
+    </section>
+
+    <!-- ── ФИЛЬТРАЦИЯ ── -->
+    <section id="filters">
+      <h2><div class="h2-ico">🔍</div> Фильтрация и поиск</h2>
+      <p>
+        Над таблицей находится панель фильтров. Она остаётся видна при прокрутке страницы вниз.
+      </p>
+
+      <h3>Фильтр по типу объекта</h3>
+      <p>
+        Кнопки с названиями типов (НОФ, Присадки, Операция и другие) появляются автоматически
+        на основе данных текущего периода. Нажмите на любую — таблица покажет только строки
+        этого типа. Кнопка <b>«Все»</b> сбрасывает фильтр.
+      </p>
+
+      <h3>Текстовый поиск</h3>
+      <p>
+        Поле <b>«Поиск...»</b> справа фильтрует таблицу одновременно по:
+        имени объекта, атрибуту, имени пользователя и типу объекта.
+        Таблица обновляется мгновенно при вводе.
+      </p>
+      <p>
+        Счётчик <b>«Количество изменений: N записей»</b> в правой части панели
+        всегда показывает сколько строк видно в данный момент.
+      </p>
+
+      <div class="callout success">
+        <div class="callout-ico">✅</div>
+        <div class="callout-body">
+          Фильтр и поиск можно <b>комбинировать</b>: например, выбрать тип «Операция»
+          и одновременно ввести имя объекта в поиске.
+        </div>
+      </div>
+    </section>
+
+    <!-- ── КОММЕНТАРИИ ── -->
+    <section id="comments">
+      <h2><div class="h2-ico">💬</div> Комментарии</h2>
+      <p>
+        Комментарий — это ваше пояснение к изменению: почему оно было сделано,
+        что стало причиной корректировки.
+      </p>
+
+      <h3>Добавление комментария</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">Нажмите на ячейку <b>«+ добавить»</b> в столбце «Комментарий» нужной строки.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">Откроется окно с информацией об изменении и полем для ввода текста.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">Введите текст и нажмите <b>«Сохранить»</b> или клавиши <kbd>Ctrl</kbd> + <kbd>Enter</kbd>.</div>
+        </div>
+      </div>
+
+      <h3>Редактирование комментария</h3>
+      <p>
+        Нажмите на текст существующего комментария — откроется то же окно.
+        Внесите правки и сохраните. Предыдущие версии комментария сохраняются
+        и отображаются в <b>истории</b> внутри окна.
+      </p>
+
+      <h3>Защита от конфликтов</h3>
+      <p>
+        Если другой пользователь изменил комментарий к той же строке,
+        пока у вас было открыто окно — система предупредит об этом.
+        Вы увидите актуальный текст и сможете выбрать:
+      </p>
+      <div class="callout warn">
+        <div class="callout-ico">⚠️</div>
+        <div class="callout-body">
+          <b>«Перезаписать»</b> — сохранить свой текст поверх чужого.<br>
+          <b>«Взять их текст»</b> — загрузить актуальный текст в поле и отредактировать его.
+        </div>
+      </div>
+
+      <h3>Кто может редактировать</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Уровень</th><th>Какие комментарии доступны</th></tr></thead>
+          <tbody>
+            <tr><td>Наблюдатель (0)</td><td>Только чтение — добавлять нельзя</td></tr>
+            <tr><td>Пользователь (1)</td><td>Только к своим строкам (где в столбце «Пользователь» стоит ваше имя)</td></tr>
+            <tr><td>Главный (2)</td><td>К любым строкам</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── ПРИЗНАК ── -->
+    <section id="signs">
+      <h2><div class="h2-ico">🏷</div> Признак</h2>
+      <p>
+        Признак — краткая категория изменения. Он помогает классифицировать
+        корректировки по причинам: «Схема», «Прибор», «Технология» и т.д.
+      </p>
+
+      <h3>Добавление признака</h3>
+      <div class="steps">
+        <div class="step">
+          <div class="step-num">1</div>
+          <div class="step-body">Нажмите на ячейку <b>«+ признак»</b> в последнем столбце нужной строки.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">2</div>
+          <div class="step-body">
+            Откроется окно. Нажмите на один из готовых вариантов из списка —
+            он подставится в поле ввода автоматически.
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num">3</div>
+          <div class="step-body">Если подходящего варианта нет — введите свой текст в поле ниже.</div>
+        </div>
+        <div class="step">
+          <div class="step-num">4</div>
+          <div class="step-body">Нажмите <b>«Сохранить»</b> или <kbd>Ctrl</kbd> + <kbd>Enter</kbd>.</div>
+        </div>
+      </div>
+
+      <div class="callout info">
+        <div class="callout-ico">💡</div>
+        <div class="callout-body">
+          Признак и комментарий работают независимо друг от друга.
+          Можно добавить только признак, только комментарий, или оба сразу.
+          Список готовых вариантов признаков настраивает администратор.
+        </div>
+      </div>
+
+      <h3>Кто может редактировать</h3>
+      <p>Те же правила, что и для комментариев: уровень 0 — только чтение,
+      уровень 1 — только свои строки, уровень 2 — любые строки.</p>
+    </section>
+
+    <!-- ── СТАТИСТИКА ── -->
+    <section id="stats">
+      <h2><div class="h2-ico">📈</div> Статистика</h2>
+      <p>
+        Кнопка <b>«📊 Статистика»</b> в правом верхнем углу страницы открывает
+        аналитическое окно по текущему периоду.
+      </p>
+
+      <div class="callout info">
+        <div class="callout-ico">🔍</div>
+        <div class="callout-body">
+          Статистика всегда считается по строкам, которые <b>видны в данный момент</b>.
+          Если включён фильтр по типу объекта — в графиках будут только отфильтрованные данные.
+        </div>
+      </div>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Блок</th><th>Что показывает</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>Карточки</td>
+              <td>Общее число изменений и разбивка по каждому типу объекта: сколько создано, отредактировано, удалено.</td>
+            </tr>
+            <tr>
+              <td>Круговая диаграмма</td>
+              <td>Доля каждого типа объекта в общем числе изменений. На каждом секторе подписаны число и процент.</td>
+            </tr>
+            <tr>
+              <td>Столбчатый график</td>
+              <td>Детализация по каждому типу объекта: сколько Создание / Редактирование / Удаление / Система.</td>
+            </tr>
+            <tr>
+              <td>Активность пользователей</td>
+              <td>Горизонтальный график — кто из сотрудников сколько изменений внёс.</td>
+            </tr>
+            <tr>
+              <td>Статистика по признакам</td>
+              <td>Сколько изменений имеют признак, сколько без признака, и какие признаки встречаются чаще всего.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── EXCEL ── -->
+    <section id="excel">
+      <h2><div class="h2-ico">⬇</div> Выгрузка в Excel</h2>
+      <p>
+        Кнопка <b>«⬇ Excel»</b> в правом верхнем углу скачивает таблицу в файл
+        формата <code style="font-family:var(--mono);font-size:13px;background:var(--surface2);padding:1px 6px;border-radius:4px">.xlsx</code>.
+      </p>
+
+      <div class="callout success">
+        <div class="callout-ico">✅</div>
+        <div class="callout-body">
+          <b>В Excel попадают только видимые строки.</b> Если включён фильтр по типу объекта —
+          в файле будут только отфильтрованные записи. Это удобно для создания
+          тематических выгрузок, например, только по типу «Операция».
+        </div>
+      </div>
+
+      <h3>Что входит в файл</h3>
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Столбец в Excel</th><th>Описание</th></tr></thead>
+          <tbody>
+            <tr><td>Начало периода</td><td>Дата начала кейса</td></tr>
+            <tr><td>Конец периода</td><td>Дата окончания кейса</td></tr>
+            <tr><td>Тип периода</td><td>Суточный или Накопительный</td></tr>
+            <tr><td>Время действия</td><td>Когда было внесено изменение</td></tr>
+            <tr><td>Пользователь</td><td>Кто внёс изменение</td></tr>
+            <tr><td>Тип объекта</td><td>НОФ, Присадки, Операция и т.д.</td></tr>
+            <tr><td>Имя объекта</td><td>Полное название объекта</td></tr>
+            <tr><td>Изменение</td><td>Создание / Редактирование / Удаление / Система</td></tr>
+            <tr><td>Атрибут</td><td>Название изменённого поля</td></tr>
+            <tr><td>До</td><td>Значение до изменения</td></tr>
+            <tr><td>После</td><td>Значение после изменения</td></tr>
+            <tr><td>Отменено</td><td>Да или Нет</td></tr>
+            <tr><td>Комментарий</td><td>Текст комментария к изменению</td></tr>
+            <tr><td>Признак</td><td>Категория изменения (если задана)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+    </section>
+
+    <hr>
+
+    <!-- ── ГОРЯЧИЕ КЛАВИШИ ── -->
+    <section id="hotkeys">
+      <h2><div class="h2-ico">⌨</div> Горячие клавиши</h2>
+
+      <div class="tbl-wrap">
+        <table>
+          <thead><tr><th>Клавиши</th><th>Действие</th><th>Где работает</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><kbd>Ctrl</kbd> + <kbd>Enter</kbd></td>
+              <td>Сохранить комментарий или признак</td>
+              <td>В окне комментария / признака</td>
+            </tr>
+            <tr>
+              <td><kbd>Escape</kbd></td>
+              <td>Закрыть окно без сохранения</td>
+              <td>В любом открытом окне</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ── FAQ ── -->
+    <section id="faq">
+      <h2><div class="h2-ico">❓</div> Вопросы и ответы</h2>
+
+      <h3>Страница долго не загружается</h3>
+      <p>
+        Для накопительных и произвольных периодов за длительный срок
+        это нормально — запрос обрабатывает большой объём данных.
+        Подождите 30–60 секунд. Уходить со страницы не нужно.
+      </p>
+
+      <h3>Не могу добавить комментарий — поле серое</h3>
+      <p>
+        Это означает одно из двух: либо ваш уровень доступа «Наблюдатель» (0),
+        либо это чужая строка, а ваш уровень — «Пользователь» (1).
+        Обратитесь к администратору.
+      </p>
+
+      <h3>Я написал комментарий, но коллега его не видит</h3>
+      <p>
+        Данные загружаются при открытии периода. Попросите коллегу
+        обновить страницу клавишей <kbd>F5</kbd> или заново открыть
+        нужный период из списка на главной.
+      </p>
+
+      <h3>В таблице нет изменения, которое точно было сделано</h3>
+      <p>
+        Убедитесь, что открыт нужный период и не включён фильтр по типу объекта
+        (кнопка «Все» должна быть активной). Также проверьте поле поиска — оно
+        может быть заполнено и скрывать часть строк. Если данных действительно нет — обратитесь к администратору.
+      </p>
+
+      <h3>Что значат цвета в столбце «Тип объекта»</h3>
+      <p>
+        Это просто визуальное разделение по категориям объектов. Цвета не несут
+        дополнительной смысловой нагрузки — они нужны для быстрой навигации по таблице.
+      </p>
+
+      <h3>Можно ли удалить комментарий</h3>
+      <p>
+        Удалить комментарий нельзя — только перезаписать новым текстом.
+        Вся история версий комментария сохраняется и видна в окне редактирования.
+      </p>
+
+      <h3>Кнопка «Выйти» — что происходит с несохранёнными данными</h3>
+      <p>
+        Если вы нажмёте «Выйти» с открытым окном комментария — несохранённый
+        текст потеряется. Сначала сохраните комментарий, потом выходите.
+      </p>
+    </section>
+
+    <hr>
+
+    <p style="text-align:center;color:var(--muted2);font-size:12px;padding:20px 0 10px">
+      АССМБ · Журнал изменений · Инструкция пользователя
+    </p>
+
+  </main>
+</div>
+
+<script>
+  // Подсветка активного пункта меню при скролле
+  const sections = document.querySelectorAll('section[id]');
+  const navLinks  = document.querySelectorAll('.sidebar nav a');
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        navLinks.forEach(a => a.classList.remove('active'));
+        const active = document.querySelector(`.sidebar nav a[href="#${e.target.id}"]`);
+        if (active) active.classList.add('active');
+      }
+    });
+  }, { rootMargin: '-15% 0px -70% 0px' });
+  sections.forEach(s => io.observe(s));
+</script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+<meta charset="UTF-8"><title>Ошибка — АССМБ</title>
+<style>
+  :root[data-theme="dark"]{--bg:#0f1117;--surface:#181c27;--border:#2a2f3d;--text:#e2e6f0;--muted:#6b7280;--red:#f87171}
+  :root[data-theme="light"]{--bg:#f0f2f8;--surface:#fff;--border:#d1d8e8;--text:#1e293b;--muted:#64748b;--red:#dc2626}
+  body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;display:flex;align-items:center;justify-content:center;min-height:100vh}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:40px;max-width:600px}
+  h2{color:var(--red);margin-bottom:16px;font-size:18px}
+  pre{font-size:12px;color:var(--muted);white-space:pre-wrap;word-break:break-word;margin-bottom:24px}
+  a{color:#4f8ef7;text-decoration:none;font-size:13px}
+</style>
+<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'light')</script>
+</head>
+<body>
+<div class="card">
+  <h2>Ошибка выполнения</h2>
+  <pre>{{ error }}</pre>
+  <a href="/">← Вернуться на главную</a>
+</div>
+</body>
+</html>

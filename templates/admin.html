@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="ru" data-theme="dark">
+<head>
+<link rel="shortcut icon" href="/static/favicon.ico" type="image/x-icon">
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Админ панель — АССМБ</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Unbounded:wght@300;600&display=swap');
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+  :root[data-theme="dark"]{--bg:#0f1117;--surface:#181c27;--surface2:#1e2435;--border:#2a2f3d;--accent:#4f8ef7;--text:#e2e6f0;--muted:#6b7280;--green:#34d399;--yellow:#fbbf24;--red:#f87171;--purple:#a78bfa;--grid:rgba(79,142,247,.03);--hbg:rgba(15,17,23,.97)}
+  :root[data-theme="light"]{--bg:#f0f2f8;--surface:#fff;--surface2:#f8faff;--border:#d1d8e8;--accent:#2563eb;--text:#1e293b;--muted:#64748b;--green:#059669;--yellow:#d97706;--red:#dc2626;--purple:#7c3aed;--grid:rgba(37,99,235,.03);--hbg:rgba(240,242,248,.97)}
+
+  body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;transition:background .3s,color .3s}
+  body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+
+  header{position:sticky;top:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:12px 24px;border-bottom:1px solid var(--border);background:var(--hbg);backdrop-filter:blur(10px);gap:12px;flex-wrap:wrap;transition:background .3s,border-color .3s}
+  .logo-text{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:600;letter-spacing:.12em;color:var(--accent);text-transform:uppercase}
+  .header-right{display:flex;align-items:center;gap:8px}
+  .btn-outline{color:var(--muted);text-decoration:none;font-size:11px;letter-spacing:.07em;text-transform:uppercase;border:1px solid var(--border);padding:6px 12px;border-radius:4px;cursor:pointer;background:transparent;font-family:'JetBrains Mono',monospace;transition:all .2s;white-space:nowrap}
+  .btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+
+  main{position:relative;z-index:1;max-width:1300px;margin:0 auto;padding:32px 24px}
+
+/* 3D-минималистичные кнопки */
+  .btn-3d{
+    display:inline-flex;align-items:center;gap:5px;
+    border:none;border-radius:7px;padding:6px 15px;
+    font-family:'Unbounded',sans-serif;font-size:9px;font-weight:700;
+    letter-spacing:.08em;text-transform:uppercase;cursor:pointer;
+    transition:all .15s;position:relative;white-space:nowrap;
+  }
+  .btn-3d:active{transform:translateY(2px)}
+
+  .btn-3d-admin{
+    background:linear-gradient(160deg,#ff5b1a 0%,#ff6224 60%,#fc6f38 100%);
+    color:#fff;
+    box-shadow:0 4px 0 #d1430a, 0 6px 12px rgba(109,40,217,.35);
+  }
+  .btn-3d-admin:hover{box-shadow:0 3px 0 #ff6224, 0 5px 10px rgba(109,40,217,.35);transform:translateY(1px)}
+  .btn-3d-admin:active{box-shadow:0 1px 0 #ff6224, 0 2px 6px rgba(109,40,217,.25);transform:translateY(3px)}
+  
+  .btn-3d-logout{
+    background:linear-gradient(160deg,#ff6161 0%,#ff2424 60%,#ff0000 100%);
+    color:#fff;
+    box-shadow:0 4px 0 #961432, 0 6px 12px rgba(5,150,105,.35);
+  }
+  .btn-3d-logout:hover{box-shadow:0 3px 0 #065f46, 0 5px 10px rgba(5,150,105,.3);transform:translateY(1px)}
+  .btn-3d-logout:active{box-shadow:0 1px 0 #065f46, 0 2px 6px rgba(5,150,105,.2);transform:translateY(3px)}
+
+/* ── 3D Тумблер темы ── */
+  .theme-block { display: flex; align-items: center; gap: 10px; }
+  .theme-label { font-size: 10px; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+
+  .switch-3d {
+    position: relative; display: inline-block;
+    width: 54px; height: 26px; cursor: pointer;
+  }
+  .switch-3d input { opacity: 0; width: 0; height: 0; }
+
+  .slider-3d {
+    position: absolute; inset: 0;
+    background: linear-gradient(160deg, #808080 0%, #575757 100%);
+    border-radius: 34px; transition: .3s;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4), 0 4px 0 #404040;
+  }
+
+  /* Круг внутри тумблера */
+  .slider-3d:before {
+    position: absolute; content: "";
+    height: 18px; width: 18px; left: 4px; bottom: 4px;
+    background: white; border-radius: 50%; transition: .3s;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+  }
+
+  /* Состояние "Включено" (Dark Mode) */
+  input:checked + .slider-3d {
+    background: linear-gradient(160deg, #b89afa 0%, #7c3aed 60%);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 4px 0 #4c1d95, 0 0 10px rgba(124, 58, 237, 0.4);
+  }
+
+  input:checked + .slider-3d:before { transform: translateX(28px); }
+
+  /* ── Регистрация ── */
+  .section-title{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:600;margin-bottom:14px}
+  .hint{font-size:11px;color:var(--muted);margin-bottom:18px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:10px 14px;line-height:1.7}
+  .hint b{color:var(--text)}
+
+  .reg-form{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:20px;margin-bottom:28px}
+  .form-row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+  .form-field{display:flex;flex-direction:column;gap:5px;flex:1;min-width:130px}
+  .form-field label{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+  .form-field input,.form-field select{background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:8px 11px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;outline:none;transition:border-color .2s}
+  .form-field input:focus,.form-field select:focus{border-color:var(--accent)}
+  .btn-primary{background:var(--accent);color:#fff;border:none;border-radius:5px;padding:8px 18px;font-family:'Unbounded',sans-serif;font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:opacity .2s;white-space:nowrap}
+  .btn-primary:hover{opacity:.88}
+  .reg-result{margin-top:10px;font-size:12px;display:none}
+  .reg-result.ok{color:var(--green)}.reg-result.err{color:var(--red)}
+
+  .divider{border:none;border-top:1px solid var(--border);margin:28px 0}
+
+  /* ── Двухколоночный журнал ── */
+  .log-columns{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+  @media(max-width:900px){.log-columns{grid-template-columns:1fr}}
+
+  .log-col-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+  .log-col-title{font-family:'Unbounded',sans-serif;font-size:12px;font-weight:600}
+
+  .period-sel{background:var(--bg);border:1px solid var(--border);border-radius:4px;padding:5px 10px;color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;outline:none;cursor:pointer;transition:border-color .2s}
+  .period-sel:focus{border-color:var(--accent)}
+
+  /* Список комментариев */
+  .feed{display:flex;flex-direction:column;gap:7px}
+  .feed-item{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:12px 14px;display:flex;align-items:flex-start;gap:12px}
+  .feed-left{display:flex;flex-direction:column;align-items:center;gap:3px;min-width:52px}
+  .feed-type{font-size:9px;font-family:'Unbounded',sans-serif;font-weight:600;padding:2px 6px;border-radius:3px;text-align:center;white-space:nowrap}
+  .ft-ins{background:rgba(52,211,153,.12);color:var(--green);border:1px solid rgba(52,211,153,.25)}
+  .ft-upd{background:rgba(251,191,36,.12);color:var(--yellow);border:1px solid rgba(251,191,36,.25)}
+  .feed-no{font-size:9px;color:var(--muted)}
+  .feed-right{flex:1;min-width:0}
+  .feed-meta{font-size:10px;color:var(--muted);margin-bottom:4px}
+  .feed-meta b{color:var(--text)}
+  .feed-text{font-size:11px;color:var(--text);line-height:1.5;word-break:break-word}
+  .feed-logid{font-size:9px;color:var(--muted);margin-top:3px}
+
+  /* Список посещений */
+  .visit-item{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:10px 14px;display:flex;align-items:flex-start;gap:12px}
+  .visit-left{min-width:52px;display:flex;flex-direction:column;align-items:center;gap:3px}
+  .action-badge{font-size:9px;font-family:'Unbounded',sans-serif;font-weight:600;padding:2px 6px;border-radius:3px;text-align:center;white-space:nowrap}
+  .ab-login{background:rgba(79,142,247,.12);color:var(--accent);border:1px solid rgba(79,142,247,.25)}
+  .ab-logout{background:rgba(107,114,128,.1);color:var(--muted);border:1px solid rgba(107,114,128,.2)}
+  .ab-excel { background: rgba(52,211,153,.12); color: var(--green); border: 1px solid rgba(52,211,153,.25); }
+  .ab-view{background:rgba(167,139,250,.1);color:var(--purple);border:1px solid rgba(167,139,250,.2)}
+  .visit-right{flex:1;min-width:0}
+  .visit-meta{font-size:10px;color:var(--muted);margin-bottom:2px}
+  .visit-meta b{color:var(--text)}
+  .visit-detail{font-size:11px;color:var(--text)}
+  .visit-ip{font-size:9px;color:var(--muted);margin-top:2px}
+
+  .feed-empty{font-size:12px;color:var(--muted);padding:16px 0;text-align:center}
+  .loading-text{font-size:11px;color:var(--muted);padding:10px 0}
+</style>
+<script>document.documentElement.setAttribute('data-theme',localStorage.getItem('theme')||'light')</script>
+</head>
+<body>
+
+<header>
+  <div class="logo-text">АССМБ · Админ панель</div>
+  <div class="header-right">
+        <!-- Тема -->
+    <div class="theme-block">
+      <span class="theme-label-3d">Тёмная тема:</span>
+      <label class="switch-3d">
+        <input type="checkbox" id="themeToggle" onclick="toggleTheme()">
+        <span class="slider-3d"></span>
+      </label>
+    </div>
+	<a href="/" style="text-decoration: none;"> <button class="btn-3d btn-3d-admin">← Периоды</button></a>
+	<a href="/logout" style="text-decoration: none;"> <button class="btn-3d btn-3d-logout">Выйти</button></a>
+  </div>
+</header>
+
+<main>
+  <div class="hint">
+    <b>Полное имя</b> должно точно совпадать с именем пользователя в АССМБ клиенте.<br>
+    <b>Восстановление пароля:</b> введите существующий логин и новый пароль — пароль будет обновлён, доступ сохранится.<br>
+    <b>Доступ:</b><br>0 — Наблюдатель <br>1 — Пользователь (только свои) <br>2 — Главный (все) <br>3 — Администратор<br>
+	Если в поле <b>Логин</b> и <b>Полное Имя</b> будут введены данные, которые уже имеются в БД, то запись перезапишется с новым паролем и доступом.
+  </div>
+  
+  
+
+  <div class="section-title">Регистрация пользователя</div>
+  <div class="reg-form">
+    <div class="form-row">
+      <div class="form-field"><label>Логин</label><input type="text" id="regLogin" placeholder="ivanova_sv" autocomplete="off"></div>
+      <div class="form-field"><label>Пароль</label><input type="password" id="regPass" placeholder="••••••••" autocomplete="new-password"></div>
+      <div class="form-field" style="flex:1.5"><label>Полное имя</label><input type="text" id="regName" placeholder="Иванова С.В." autocomplete="off"></div>
+      <div class="form-field" style="flex:0 0 155px">
+        <label>Доступ</label>
+        <select id="regAccess">
+          <option value="0">0 — Наблюдатель</option>
+          <option value="1">1 — Пользователь</option>
+          <option value="2">2 — Главный</option>
+          <option value="3">3 — Администратор</option>
+        </select>
+      </div>
+      <button class="btn-primary" onclick="registerUser()">Зарегистрировать</button>
+    </div>
+    <div class="reg-result" id="regResult"></div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- ── Справочник признаков ── -->
+  <div class="section-title">Справочник признаков</div>
+  <div class="reg-form" style="margin-bottom:20px">
+    <div style="font-size:11px;color:var(--muted);margin-bottom:14px">
+      Признаки отображаются пользователям в качестве готовых вариантов при добавлении признака к изменению.
+    </div>
+    <div class="form-row">
+      <div class="form-field" style="flex:1">
+        <label>Новый признак</label>
+        <input type="text" id="newPresetName" placeholder="Например: Технология" autocomplete="off">
+      </div>
+      <button class="btn-primary" onclick="addPreset()">Добавить</button>
+    </div>
+    <div class="reg-result" id="presetResult" style="display:none;margin-top:8px"></div>
+    <div style="font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:12px 0 8px">Текущие признаки:</div>
+    <div id="presetList" style="display:flex;gap:8px;flex-wrap:wrap">
+      <span style="font-size:11px;color:var(--muted)">Загрузка...</span>
+    </div>
+  </div>
+
+  <hr class="divider">
+
+  <!-- Двухколоночный журнал -->
+  <div class="log-columns">
+
+    <!-- Левый: журнал комментариев -->
+    <div>
+      <div class="log-col-header">
+        <div class="log-col-title">💬 Журнал комментариев</div>
+        <select class="period-sel" id="commentPeriod" onchange="loadComments()">
+          <option value="d1" selected>1 день</option>
+          <option value="d2">2 дня</option>
+          <option value="d3">3 дня</option>
+          <option value="d4">4 дня</option>
+          <option value="d5">5 дней</option>
+          <option value="d7">7 дней</option>
+          <option value="m1">1 месяц</option>
+          <option value="m2">2 месяца</option>
+          <option value="m3">3 месяца</option>
+          <option value="m6">6 месяцев</option>
+          <option value="m12">12 месяцев</option>
+          <option value="m999">Весь период</option>
+        </select>
+      </div>
+      <div class="feed" id="commentFeed"><div class="loading-text">Загрузка...</div></div>
+    </div>
+
+    <!-- Правый: журнал посещений -->
+    <div>
+      <div class="log-col-header">
+        <div class="log-col-title">👁 Журнал посещений</div>
+        <select class="period-sel" id="visitPeriod" onchange="loadVisits()">
+          <option value="d1" selected>1 день</option>
+          <option value="d2">2 дня</option>
+          <option value="d3">3 дня</option>
+          <option value="d4">4 дня</option>
+          <option value="d5">5 дней</option>
+          <option value="d7">7 дней</option>
+          <option value="m1">1 месяц</option>
+          <option value="m2">2 месяца</option>
+          <option value="m3">3 месяца</option>
+          <option value="m6">6 месяцев</option>
+          <option value="m12">12 месяцев</option>
+          <option value="m999">Весь период</option>
+        </select>
+      </div>
+      <div class="feed" id="visitFeed"><div class="loading-text">Загрузка...</div></div>
+    </div>
+
+  </div>
+</main>
+
+<script>
+  // ── Тема ──────────────────────────────────────────────────────────
+const html = document.documentElement;
+const themeToggle = document.getElementById('themeToggle');
+
+// Инициализация при загрузке
+const savedTheme = localStorage.getItem('theme') || 'dark';
+setTheme(savedTheme);
+
+function setTheme(t) {
+  html.setAttribute('data-theme', t);
+  localStorage.setItem('theme', t);
+  
+  // Устанавливаем положение тумблера
+  if (themeToggle) {
+    themeToggle.checked = (t === 'dark');
+  }
+}
+
+function toggleTheme() {
+  const newTheme = themeToggle.checked ? 'dark' : 'light';
+  setTheme(newTheme);
+}
+
+  async function registerUser(){
+    const login=document.getElementById('regLogin').value.trim();
+    const pass=document.getElementById('regPass').value.trim();
+    const name=document.getElementById('regName').value.trim();
+    const access=parseInt(document.getElementById('regAccess').value);
+    const res=document.getElementById('regResult');
+    if(!login||!pass||!name){res.className='reg-result err';res.textContent='Заполните все поля';res.style.display='block';return}
+    try{
+      const r=await fetch('/api/create_user',{method:'POST',headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({username:login,password:pass,fullname:name,access})});
+      const d=await r.json();
+      if(r.ok){
+        res.className='reg-result ok';
+        res.textContent=(d.updated?'🔑 ':'✓ ')+d.message;
+        // При смене пароля не очищаем поле логина — удобно для подтверждения
+        if(!d.updated) ['regLogin','regPass','regName'].forEach(id=>document.getElementById(id).value='');
+        else document.getElementById('regPass').value='';
+      }else{res.className='reg-result err';res.textContent='✗ '+d.detail;}
+    }catch(e){res.className='reg-result err';res.textContent='Ошибка: '+e.message}
+    res.style.display='block';
+  }
+
+  function parsePeriod(val) {
+    // val: "d7" = 7 дней, "m3" = 3 месяца
+    if (val.startsWith('d')) return { days: parseInt(val.slice(1)), months: 0 };
+    return { days: 0, months: parseInt(val.slice(1)) };
+  }
+
+  async function loadComments(){
+    const p = parsePeriod(document.getElementById('commentPeriod').value);
+    const qs = p.days > 0 ? `days=${p.days}` : `months=${p.months}`;
+    const feed=document.getElementById('commentFeed');
+    feed.innerHTML='<div class="loading-text">Загрузка...</div>';
+    try{
+      const r=await fetch(`/api/recent_comments?${qs}`);
+      const items=await r.json();
+      if(!items.length){feed.innerHTML='<div class="feed-empty">Комментариев нет</div>';return}
+      feed.innerHTML=items.map(x=>`
+        <div class="feed-item">
+          <div class="feed-left">
+            <span class="feed-type ${x.type==='Inserted'?'ft-ins':'ft-upd'}">${x.type==='Inserted'?'Добавлено':'Изменено'}</span>
+            <span class="feed-no">#${x.change_no}</span>
+          </div>
+          <div class="feed-right">
+            <div class="feed-meta"><b>${x.by}</b> · ${x.at}</div>
+            <div class="feed-text">${x.comment}</div>
+            <div class="feed-logid">Log ID: ${x.log_id}</div>
+          </div>
+        </div>`).join('');
+    }catch(e){feed.innerHTML=`<div class="feed-empty" style="color:var(--red)">Ошибка: ${e.message}</div>`}
+  }
+
+  async function loadVisits() {
+    const p = parsePeriod(document.getElementById('visitPeriod').value);
+    const qs = p.days > 0 ? `days=${p.days}` : `months=${p.months}`;
+    const feed = document.getElementById('visitFeed');
+    feed.innerHTML = '<div class="loading-text">Загрузка...</div>';
+    
+    try {
+        const r = await fetch(`/api/visit_log?${qs}`);
+        const items = await r.json();
+        if (!items.length) { feed.innerHTML = '<div class="feed-empty">Посещений нет</div>'; return; }
+        
+        feed.innerHTML = items.map(x => {
+            let badgeClass = 'ab-view', label = 'Просмотр';
+            
+            // Логика определения типа действия
+            if (x.action === 'login') { 
+                badgeClass = 'ab-login'; label = 'Вход'; 
+            } else if (x.action === 'logout') { 
+                badgeClass = 'ab-logout'; label = 'Выход'; 
+            } else if (x.action === 'export_excel' || x.action === 'export_log') { 
+                badgeClass = 'ab-excel'; label = 'Выгрузка'; 
+            }
+
+            // Формирование текста деталей
+            let detailHtml = '';
+            if (x.action === 'view_period') {
+                detailHtml = `<div class="visit-detail">Период: ${x.detail}</div>`;
+            } else if (x.action === 'export_excel' || x.action === 'export_log') {
+                detailHtml = `<div class="visit-detail">${x.detail}</div>`;
+            }
+
+            return `
+                <div class="visit-item">
+                    <div class="visit-left"><span class="action-badge ${badgeClass}">${label}</span></div>
+                    <div class="visit-right">
+                        <div class="visit-meta"><b>${x.fullname}</b> (${x.username}) · ${x.at}</div>
+                        ${detailHtml}
+                        <div class="visit-ip">IP: ${x.ip}</div>
+                    </div>
+                </div>`;
+        }).join('');
+    } catch (e) {
+        feed.innerHTML = `<div class="feed-empty" style="color:var(--red)">Ошибка: ${e.message}</div>`;
+    }
+}
+
+  async function loadPresets() {
+    const list = document.getElementById('presetList');
+    if (!list) return;
+    try {
+      const r = await fetch('/api/sign_presets');
+      if (!r.ok) throw new Error(r.statusText);
+      const items = await r.json();
+      if (!items.length) {
+        list.innerHTML = '<span style="font-size:11px;color:var(--muted)">Признаков нет</span>';
+        return;
+      }
+      list.innerHTML = items.map(p =>
+        `<span style="display:inline-flex;align-items:center;gap:5px;background:var(--bg);border:1px solid var(--border);border-radius:5px;padding:4px 10px;font-size:11px;color:var(--text)">
+          ${p.name}
+          <button onclick="deletePreset(${p.id},'${p.name.replace(/'/g,"\'")}')"
+            style="background:transparent;border:none;cursor:pointer;color:var(--muted);font-size:13px;line-height:1;padding:0 2px"
+            onmouseover="this.style.color='var(--red)'"
+            onmouseout="this.style.color='var(--muted)'"
+            title="Удалить">✕</button>
+        </span>`
+      ).join('');
+    } catch(e) {
+      list.innerHTML = `<span style="color:var(--red);font-size:11px">Ошибка: ${e.message}</span>`;
+    }
+  }
+
+  async function addPreset() {
+    const name = document.getElementById('newPresetName').value.trim();
+    const res  = document.getElementById('presetResult');
+    if (!name) {
+      res.className = 'reg-result err'; res.textContent = 'Введите название';
+      res.style.display = 'block'; return;
+    }
+    try {
+      const r = await fetch('/api/sign_presets', {
+        method: 'POST', headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({name})
+      });
+      const d = await r.json();
+      if (r.ok) {
+        res.className = 'reg-result ok'; res.textContent = '✓ Признак добавлен';
+        document.getElementById('newPresetName').value = '';
+        loadPresets();
+      } else {
+        res.className = 'reg-result err'; res.textContent = '✗ ' + d.detail;
+      }
+    } catch(e) {
+      res.className = 'reg-result err'; res.textContent = 'Ошибка: ' + e.message;
+    }
+    res.style.display = 'block';
+    setTimeout(() => { res.style.display = 'none'; }, 3000);
+  }
+
+  async function deletePreset(id, name) {
+    if (!confirm(`Удалить признак "${name}"?`)) return;
+    try {
+      const r = await fetch(`/api/sign_presets/${id}`, {method: 'DELETE'});
+      if (r.ok) loadPresets();
+      else alert('Ошибка при удалении');
+    } catch(e) {
+      alert('Ошибка: ' + e.message);
+    }
+  }
+
+  loadComments();
+  loadVisits();
+  loadPresets();
+</script>
+</body>
+</html>
